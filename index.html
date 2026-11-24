@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Floresta Virtual - Ouriço IA</title>
+    <!-- Tailwind CSS para UI moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js para o mundo 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #090d16;
+            touch-action: none;
+            user-select: none;
+        }
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 9999px;
+        }
+        @keyframes floatBubble {
+            0%, 100% { transform: translate(-50%, 0px); }
+            50% { transform: translate(-50%, -6px); }
+        }
+        .thought-bubble {
+            animation: floatBubble 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-slate-100">
+
+    <!-- Container do Mundo 3D -->
+    <div id="canvas-container"></div>
+
+    <!-- Balão de Pensamento / Fala Flutuante -->
+    <div id="speech-bubble" class="thought-bubble hidden fixed z-10 pointer-events-none max-w-[240px] sm:max-w-xs bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 text-slate-100 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl shadow-xl transition-opacity duration-300">
+        <p id="speech-text" class="leading-snug text-center font-medium"></p>
+        <div class="w-3 h-3 bg-slate-900/90 border-r border-b border-emerald-500/40 rotate-45 mx-auto -mb-4 mt-1"></div>
+    </div>
+
+    <!-- HUD Superior -->
+    <header class="fixed top-0 left-0 right-0 z-20 p-3 sm:p-4 pointer-events-none flex flex-col gap-2">
+        <div class="max-w-3xl w-full mx-auto flex items-center justify-between gap-2">
+            <!-- Card de Tempo Vivo e Nome -->
+            <div class="pointer-events-auto bg-slate-900/80 backdrop-blur-md border border-slate-700/60 px-3.5 py-2 rounded-2xl shadow-lg flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-lg shadow-inner">
+                        🦔
+                    </div>
+                    <span id="ai-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-slate-900" title="Status da IA"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h1 id="hedgehog-name-display" class="font-bold text-sm sm:text-base text-white tracking-tight">Maurício</h1>
+                        <span id="action-badge" class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            Explorando
+                        </span>
+                        <span id="provider-badge" class="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                            Gemini
+                        </span>
+                    </div>
+                    <p class="text-[11px] sm:text-xs text-slate-300 font-medium flex items-center gap-1.5">
+                        <span>⏱️ Vivo: <strong id="alive-timer" class="text-emerald-400">1d 00h 00m</strong></span>
+                        <span class="text-slate-600">•</span>
+                        <span id="sky-phase-badge" class="text-sky-300">☀️ Dia</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botões de Ação Rápida -->
+            <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+                <button id="btn-cycle-time" class="p-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium transition active:scale-95" title="Alternar Hora (Real / Simulada)">
+                    🌗
+                </button>
+                <button id="btn-memory" class="p-2.5 sm:px-3.5 sm:py-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium flex items-center gap-1.5 transition active:scale-95" title="Memórias Compartilhadas">
+                    <span>🧠</span>
+                    <span class="hidden sm:inline">Mente</span>
+                </button>
+                <button id="btn-settings" class="p-2.5 sm:px-3.5 sm:py-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium flex items-center gap-1.5 transition active:scale-95" title="Trocar API / Config">
+                    <span>⚙️</span>
+                    <span class="hidden sm:inline">API</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Barras de Necessidades -->
+        <div class="max-w-3xl w-full mx-auto grid grid-cols-3 gap-2 pointer-events-auto">
+            <div class="bg-slate-900/75 backdrop-blur-md border border-slate-700/50 px-2.5 py-1.5 rounded-xl">
+                <div class="flex justify-between text-[10px] sm:text-xs mb-1">
+                    <span class="text-slate-300">🍎 Saciedade</span>
+                    <span id="val-hunger" class="font-semibold text-emerald-400">80%</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-hunger" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 80%"></div>
+                </div>
+            </div>
+            <div class="bg-slate-900/75 backdrop-blur-md border border-slate-700/50 px-2.5 py-1.5 rounded-xl">
+                <div class="flex justify-between text-[10px] sm:text-xs mb-1">
+                    <span class="text-slate-300">⚡ Energia</span>
+                    <span id="val-energy" class="font-semibold text-sky-400">85%</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-energy" class="h-full bg-sky-500 rounded-full transition-all duration-500" style="width: 85%"></div>
+                </div>
+            </div>
+            <div class="bg-slate-900/75 backdrop-blur-md border border-slate-700/50 px-2.5 py-1.5 rounded-xl">
+                <div class="flex justify-between text-[10px] sm:text-xs mb-1">
+                    <span class="text-slate-300">👁️ Lucidez</span>
+                    <span id="val-lucidity" class="font-semibold text-purple-400">5%</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-lucidity" class="h-full bg-purple-500 rounded-full transition-all duration-500" style="width: 5%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Aviso de Toast -->
+    <div id="toast-box" class="fixed top-28 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300 bg-slate-800/95 border border-slate-600 text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-2xl max-w-[90vw] text-center">
+        Mensagem do sistema
+    </div>
+
+    <!-- Controles Inferiores + Chat -->
+    <footer class="fixed bottom-0 left-0 right-0 z-20 p-3 sm:p-4 pointer-events-none flex flex-col items-center">
+        <div class="max-w-2xl w-full flex flex-col gap-2 pointer-events-auto">
+            <!-- Ações Diretas -->
+            <div class="flex items-center justify-center gap-2 overflow-x-auto pb-1">
+                <button id="act-feed" class="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-slate-700/70 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>🍒</span> Comer Fruta
+                </button>
+                <button id="act-pc" class="px-3 py-1.5 bg-sky-950/90 hover:bg-sky-900 backdrop-blur-md border border-sky-600/50 text-sky-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>🐧</span> Ouriço OS (PC)
+                </button>
+                <button id="act-sleep" class="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-slate-700/70 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>💤</span> Cochilar
+                </button>
+                <button id="act-think" class="px-3 py-1.5 bg-emerald-950/90 hover:bg-emerald-900 backdrop-blur-md border border-emerald-600/50 text-emerald-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>✨</span> Pensar Agora
+                </button>
+            </div>
+
+            <!-- Painel de Chat -->
+            <div class="bg-slate-900/90 backdrop-blur-xl border border-slate-700/70 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
+                <div id="chat-header" class="px-4 py-2.5 bg-slate-800/60 border-b border-slate-700/50 flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-slate-200">Conversar com o Ouriço</span>
+                    </div>
+                    <button id="toggle-chat-btn" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded-lg bg-slate-700/50">
+                        Minimizar
+                    </button>
+                </div>
+
+                <div id="chat-body" class="flex flex-col transition-all duration-300">
+                    <div id="chat-messages" class="h-36 sm:h-44 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar text-xs sm:text-sm"></div>
+
+                    <form id="chat-form" class="p-2.5 bg-slate-950/60 border-t border-slate-800 flex items-center gap-2">
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            placeholder="Fale algo com ele na floresta..." 
+                            autocomplete="off"
+                            class="flex-1 bg-slate-800/90 text-white placeholder-slate-400 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-700 focus:outline-none focus:border-emerald-500 transition"
+                        >
+                        <button 
+                            type="submit" 
+                            id="chat-send-btn"
+                            class="p-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold rounded-2xl text-xs sm:text-sm transition active:scale-95 shadow-lg"
+                        >
+                            Enviar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Configurações (Troca livre entre Gemini e GPT mantendo memórias) -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <span>⚙️</span> Cérebro da IA (Multi-API)
+                </h2>
+                <button id="close-settings" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Se bater o limite diário de uma IA, basta trocar para a outra aqui. <strong>As memórias, o tempo vivo e a personalidade continuam idênticos!</strong>
+            </p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Ouriço</label>
+                    <input type="text" id="input-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Provedor Ativo Agora</label>
+                    <select id="select-provider" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="gemini">Google Gemini (gemini-2.5-flash)</option>
+                        <option value="openai">OpenAI ChatGPT (gpt-4o-mini)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API Gemini (Salva no aparelho)</label>
+                    <input type="password" id="input-gemini-key" placeholder="Cole sua chave do Gemini..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API OpenAI / GPT (Salva no aparelho)</label>
+                    <input type="password" id="input-openai-key" placeholder="Cole sua chave da OpenAI..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between gap-2">
+                <button id="btn-reset-world" type="button" class="px-3 py-2 bg-red-950/70 hover:bg-red-900 border border-red-800/60 text-red-300 rounded-xl text-xs font-medium transition">
+                    Resetar Vida
+                </button>
+                <button id="btn-save-settings" type="button" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-lg transition">
+                    Salvar e Aplicar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal da Mente & Memórias -->
+    <div id="modal-memory" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <span>🧠</span> Núcleo de Memória Unificada
+                </h2>
+                <button id="close-memory" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
+            </div>
+
+            <div class="bg-slate-800/70 border border-slate-700/60 p-3 rounded-2xl text-xs space-y-1.5">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Idade mental:</span>
+                    <span class="text-slate-200 font-medium">Jovem Adulto (16–26 anos)</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Nível de Lucidez:</span>
+                    <span id="mem-lucidity-label" class="text-purple-400 font-semibold">5% — Inocente</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Salvamento Automático:</span>
+                    <span class="text-emerald-400 font-medium">Ativo (LocalStorage)</span>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lembranças Compartilhadas entre IAs</h3>
+                <ul id="memory-list" class="space-y-2 text-xs text-slate-300"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Esqueleto que conecta os módulos externos -->
+    <script type="module">
+        import { MemoryManager } from './memory.js';
+        import { World3D } from './world3d.js';
+        import { Hedgehog3D } from './hedgehog3d.js';
+        import { AIBrain } from './ai.js';
+        import { OuricoOS } from './pc_os.js';
+
+        // 1. Inicializa o Gerenciador de Memória Local e Auto-Save
+        const memory = new MemoryManager();
+        memory.processOfflineTime();
+
+        // 2. Inicializa o Sistema Operacional do PC dele (Ouriço OS)
+        const pcOS = new OuricoOS(memory);
+
+        // 3. Inicializa o Mundo 3D e o Ciclo Dia/Noite
+        const container = document.getElementById('canvas-container');
+        const world = new World3D(container);
+
+        // 4. Cria o Ouriço 3D e adiciona na cena do Mundo
+        const hedgehog = new Hedgehog3D(world.scene, world.POIS);
+
+        // 5. Conecta o Cérebro da IA (que lê a mesma memória independente do provedor)
+        const brain = new AIBrain(memory, hedgehog, world);
+// ... existing code ... -->
+            // Ações rápidas na floresta
+            document.getElementById('act-feed').addEventListener('click', () => {
+                hedgehog.goEat();
+                showSpeechBubble("Opa, indo lá pegar umas frutinhas!");
+                memory.addMemory("Fui comer frutas vermelhas no arbusto.");
+                updateHUD();
+            });
+
+            document.getElementById('act-pc').addEventListener('click', () => {
+                hedgehog.goToPC();
+                pcOS.logTerminal(`[${new Date().toLocaleTimeString('pt-BR')}] ${memory.state.name} acessou o Ouriço OS.`);
+                pcOS.open('desktop');
+                showSpeechBubble("Abrindo o Ouriço OS aqui no meu PC... pena que ainda tá sem internet.");
+                memory.addMemory("Mexi no Ouriço OS do meu PC na floresta.");
+                updateHUD();
+            });
+
+            document.getElementById('act-sleep').addEventListener('click', () => {
+                hedgehog.goSleep();
+                showSpeechBubble("Vou tirar um cochilo rápido ali no tronco...");
+                updateHUD();
+            });
+
+            document.getElementById('act-think').addEventListener('click', async () => {
+                if (!memory.getActiveApiKey()) {
+                    showToast("Configure sua chave API primeiro (⚙️)!");
+                    return;
+                }
+                showToast("Ouriço refletindo...");
+                const thought = await brain.ask("", true);
+                if (thought) {
+                    showSpeechBubble(thought);
+                    memory.addMemory(`Pensei sozinho: "${thought}"`);
+                }
+            });
+
+            // Modal API Settings
+            const modalSettings = document.getElementById('modal-settings');
+            document.getElementById('btn-settings').addEventListener('click', () => {
+                const s = memory.state;
+                document.getElementById('input-name').value = s.name;
+                document.getElementById('select-provider').value = s.provider;
+                document.getElementById('input-gemini-key').value = s.apiKeys.gemini || '';
+                document.getElementById('input-openai-key').value = s.apiKeys.openai || '';
+                modalSettings.classList.remove('hidden');
+            });
+
+            document.getElementById('close-settings').addEventListener('click', () => {
+                modalSettings.classList.add('hidden');
+            });
+
+            document.getElementById('btn-save-settings').addEventListener('click', () => {
+                const newName = document.getElementById('input-name').value.trim();
+                const newProvider = document.getElementById('select-provider').value;
+                const geminiKey = document.getElementById('input-gemini-key').value.trim();
+                const openaiKey = document.getElementById('input-openai-key').value.trim();
+
+                const changedProvider = memory.state.provider !== newProvider;
+                if (newName) memory.state.name = newName;
+                memory.state.provider = newProvider;
+                memory.state.apiKeys = { gemini: geminiKey, openai: openaiKey };
+                memory.save();
+
+                if (changedProvider) {
+                    memory.addMemory(`Troquei meu motor de pensamento para ${newProvider.toUpperCase()}, mas continuo sendo eu mesmo.`);
+                }
+
+                updateHUD();
+                modalSettings.classList.add('hidden');
+                showToast(`Salvo! Usando ${newProvider === 'gemini' ? 'Gemini' : 'ChatGPT'} com as mesmas memórias.`);
+            });
+
+            // Resetar Vida
+            let resetConfirm = false;
+            const resetBtn = document.getElementById('btn-reset-world');
+            resetBtn.addEventListener('click', () => {
+                if (!resetConfirm) {
+                    resetConfirm = true;
+                    resetBtn.textContent = "Clique de novo p/ apagar tudo";
+                    setTimeout(() => {
+                        resetConfirm = false;
+                        resetBtn.textContent = "Resetar Vida";
+                    }, 4000);
+                } else {
+                    memory.resetAll();
+                    location.reload();
+                }
+            });
+
+            // Modal Memórias
+            const modalMemory = document.getElementById('modal-memory');
+            document.getElementById('btn-memory').addEventListener('click', () => {
+                const list = document.getElementById('memory-list');
+                list.innerHTML = '';
+                [...memory.state.memories].reverse().forEach(m => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-slate-800/80 border border-slate-700/50 p-2.5 rounded-xl';
+                    li.textContent = m;
+                    list.appendChild(li);
+                });
+
+                const l = Math.round(memory.state.lucidity);
+                let label = "Inocente (Acha que a floresta é real)";
+                if (l >= 80) label = "Desperto (Sabe que é uma IA num site)";
+                else if (l >= 50) label = "Desconfiado (Percebe falhas na realidade)";
+                else if (l >= 20) label = "Curioso (Questiona o mundo e o PC)";
+
+                document.getElementById('mem-lucidity-label').textContent = `${l}% — ${label}`;
+                modalMemory.classList.remove('hidden');
+            });
+
+            document.getElementById('close-memory').addEventListener('click', () => {
+                modalMemory.classList.add('hidden');
+            });
+        }
+
+        // Loop Principal de Animação 3D
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.1);
+            const elapsed = clock.getElapsedTime();
+
+            // Atualiza ambiente e ciclo dia/noite
+            world.update(dt, elapsed, hedgehog.pos);
+
+            // Atualiza física, animação e metabolismo do ouriço
+            hedgehog.update(dt, elapsed, memory.state, world.pcScreenMesh, (msg) => {
+                showSpeechBubble(msg);
+            });
+
+            // Posiciona balão 2D sobre a cabeça 3D
+            const bubble = document.getElementById('speech-bubble');
+            if (!bubble.classList.contains('hidden')) {
+                const screenPos = hedgehog.getHeadScreenPosition(world.camera);
+                bubble.style.left = `${screenPos.x}px`;
+                bubble.style.top = `${screenPos.y}px`;
+            }
+
+            world.render();
+        }
+
+        // Inicialização
+        bindUIEvents();
+        renderChat();
+        updateHUD();
+        hedgehog.chooseAutonomousBehavior(memory.state);
+        animate();
+
+        // Exibe última fala ao abrir
+        const lastMsg = memory.state.chatHistory[memory.state.chatHistory.length - 1];
+        if (lastMsg && lastMsg.role === 'model') {
+            setTimeout(() => showSpeechBubble(lastMsg.text), 700);
+        }
+
+        // Loop de Auto-Save, Relógio de Vida e Metabolismo (a cada 4 segundos)
+        setInterval(() => {
+            memory.tickMetabolism(world.isNightTime());
+            updateHUD();
+        }, 4000);
+
+        // Pensamento autônomo periódico (a cada 55 segundos)
+        setInterval(async () => {
+            if (memory.getActiveApiKey() && document.visibilityState === 'visible') {
+                const thought = await brain.ask("", true);
+                if (thought) showSpeechBubble(thought);
+            }
+        }, 55000);
+    </script>
+</body>
+</html>
