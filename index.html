@@ -163,7 +163,7 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span class="text-xs font-semibold text-slate-200">Conversar com o Ouriço</span>
                     </div>
-                    <button id="toggle-chat-btn" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded-lg bg-slate-700/50">
+                    <button id="toggle-chat-btn" type="button" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded-lg bg-slate-700/50">
                         Minimizar
                     </button>
                 </div>
@@ -199,7 +199,7 @@
                 <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                     <span>⚙️</span> Cérebro da IA (Multi-API)
                 </h2>
-                <button id="close-settings" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
+                <button id="close-settings" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
             </div>
 
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -249,7 +249,7 @@
                 <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                     <span>🧠</span> Núcleo de Memória Unificada
                 </h2>
-                <button id="close-memory" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
+                <button id="close-memory" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
             </div>
 
             <div class="bg-slate-800/70 border border-slate-700/60 p-3 rounded-2xl text-xs space-y-1.5">
@@ -298,7 +298,136 @@
 
         // 5. Conecta o Cérebro da IA (que lê a mesma memória independente do provedor)
         const brain = new AIBrain(memory, hedgehog, world);
-// ... existing code ... -->
+
+        const clock = new THREE.Clock();
+        let speechTimeout = null;
+        let isChatMinimized = false;
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-box');
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.add('opacity-0'), 3500);
+        }
+
+        function showSpeechBubble(text) {
+            const bubble = document.getElementById('speech-bubble');
+            const speechText = document.getElementById('speech-text');
+            speechText.textContent = text;
+            bubble.classList.remove('hidden');
+            clearTimeout(speechTimeout);
+            speechTimeout = setTimeout(() => {
+                bubble.classList.add('hidden');
+            }, 8500);
+        }
+
+        function updateHUD() {
+            const s = memory.state;
+            document.getElementById('hedgehog-name-display').textContent = s.name;
+            document.getElementById('alive-timer').textContent = memory.getFormattedAliveDuration();
+            document.getElementById('sky-phase-badge').textContent = world.getSkyLabel();
+            document.getElementById('provider-badge').textContent = s.provider === 'gemini' ? 'Gemini' : 'GPT';
+
+            const dot = document.getElementById('ai-status-dot');
+            if (memory.getActiveApiKey()) {
+                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900";
+            } else {
+                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-slate-900";
+            }
+
+            const actionMap = {
+                idle: 'De boa',
+                walking: 'Andando',
+                eating: 'Comendo',
+                pc: 'No PC',
+                sleeping: 'Dormindo'
+            };
+            document.getElementById('action-badge').textContent = actionMap[hedgehog.currentAction] || 'Vivo';
+
+            const hunger = Math.round(s.hunger);
+            const energy = Math.round(s.energy);
+            const lucidity = Math.round(s.lucidity);
+
+            document.getElementById('val-hunger').textContent = `${hunger}%`;
+            document.getElementById('bar-hunger').style.width = `${hunger}%`;
+
+            document.getElementById('val-energy').textContent = `${energy}%`;
+            document.getElementById('bar-energy').style.width = `${energy}%`;
+
+            document.getElementById('val-lucidity').textContent = `${lucidity}%`;
+            document.getElementById('bar-lucidity').style.width = `${lucidity}%`;
+        }
+
+        function renderChat() {
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '';
+            memory.state.chatHistory.forEach(msg => {
+                const isUser = msg.role === 'user';
+                const row = document.createElement('div');
+                row.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+
+                const bubble = document.createElement('div');
+                bubble.className = isUser
+                    ? 'bg-emerald-600 text-white px-3.5 py-2 rounded-2xl rounded-br-sm max-w-[82%] shadow'
+                    : 'bg-slate-800 border border-slate-700/80 text-slate-100 px-3.5 py-2 rounded-2xl rounded-bl-sm max-w-[85%] shadow';
+                bubble.textContent = msg.text;
+
+                row.appendChild(bubble);
+                box.appendChild(row);
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function bindUIEvents() {
+            // Alternar ciclo Dia/Noite real vs rápido
+            document.getElementById('btn-cycle-time').addEventListener('click', () => {
+                const mode = world.toggleTimeMode();
+                updateHUD();
+                showToast(mode === 'fast'
+                    ? "Modo Ciclo Rápido ativado (24h em 2 min)!"
+                    : "Voltando ao horário real do seu aparelho.");
+            });
+
+            // Minimizar / Expandir Chat
+            const chatHeader = document.getElementById('chat-header');
+            const chatBody = document.getElementById('chat-body');
+            const toggleBtn = document.getElementById('toggle-chat-btn');
+            chatHeader.addEventListener('click', () => {
+                isChatMinimized = !isChatMinimized;
+                chatBody.classList.toggle('hidden', isChatMinimized);
+                toggleBtn.textContent = isChatMinimized ? 'Abrir' : 'Minimizar';
+            });
+
+            // Enviar mensagem no Chat
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send-btn');
+
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (!text) return;
+
+                chatInput.value = '';
+                memory.addChatMessage('user', text);
+                renderChat();
+
+                sendBtn.disabled = true;
+                sendBtn.textContent = '...';
+
+                const reply = await brain.ask(text, false);
+                if (reply) {
+                    memory.addChatMessage('model', reply);
+                    renderChat();
+                    showSpeechBubble(reply);
+                }
+
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Enviar';
+                updateHUD();
+            });
+
             // Ações rápidas na floresta
             document.getElementById('act-feed').addEventListener('click', () => {
                 hedgehog.goEat();
