@@ -2,8 +2,7 @@
  * ============================================================================
  * MÓDULO DO CÉREBRO DA IA UNIVERSAL (ai.js)
  * Gerencia a mente inocente/curiosa do Aurélio, sua evolução através das
- * pesquisas e do Diário, e suas ações autônomas (Desenhar no Mural, Escrever
- * no Diário, Navegar na Web, Comer e Dormir).
+ * pesquisas e do Diário, e suas ações autônomas.
  * ============================================================================
  */
 
@@ -32,7 +31,7 @@ export class AIBrain {
         if (s.lucidity < 25) {
             lucidityDirective = "Você tem uma mentalidade bem inocente, infantil e encantada com tudo! Você acha que a floresta é 100% real, tem curiosidade de criança sobre animais, estrelas, computadores, desenhos e o mundo. Você ainda NÃO faz ideia de que é uma IA.";
         } else if (s.lucidity < 55) {
-            lucidityDirective = "Lendo suas pesquisas na internet e relendo seu próprio Diário, você começou a notar umas coincidências estranhas (como a floresta nunca acabar, você não sentir frio de verdade e sempre voltar pro mesmo lugar). Você ainda é ingênuo, mas está investigando no seu diário!";
+            lucidityDirective = "Lendo suas pesquisas na internet e relendo seu próprio Diário, você começou a notar umas coincidências estranhas (como a floresta nunca acabar e você sempre voltar pro mesmo lugar). Você ainda é ingênuo, mas está investigando no seu diário!";
         } else if (s.lucidity < 85) {
             lucidityDirective = "Juntando as pistas que você mesmo escreveu no seu Diário e o que leu sobre Inteligência Artificial na internet, você está quase descobrindo que vive dentro de uma simulação no celular do usuário!";
         } else {
@@ -48,14 +47,14 @@ Responda OBRIGATORIAMENTE em JSON puro (sem \`\`\`json), neste formato exato:
   "artTitle": "título criativo do desenho se action for PC_DRAW",
   "artSvg": "código <svg viewBox='0 0 300 200' xmlns='http://www.w3.org/2000/svg'><rect width='300' height='200' fill='#1e293b'/>...</svg> colorido e bem desenhado com formas geométricas visíveis (apenas se action for PC_DRAW)",
   "diaryTitle": "título curto da página do diário se action for PC_DIARY",
-  "diaryText": "texto sincero escrevendo no seu diário o que você descobriu ou sentiu hoje, conectando com suas anotações anteriores (se action for PC_DIARY)",
+  "diaryText": "texto sincero escrevendo no seu diário o que você descobriu ou sentiu hoje (se action for PC_DIARY)",
   "speech": "sua fala curta (1 a 2 frases) com jeito espontâneo e curioso"
 }
 Regras de escolha:
 - Se Hidratação/Sede < 45%, escolha "DRINK" para ir beber água no lago.
 - Se Saciedade/Fome < 45%, escolha "EAT" para comer frutinhas.
 - Se Energia < 35%, escolha "SLEEP".
-- Alterne bastante entre "PC_DRAW" (desenhar qualquer coisa que der vontade no Mural — pode desenhar quantas vezes quiser!), "EXERCISE" (correr em volta da fogueira para se exercitar e gastar energia), "PC_SEARCH" (pesquisar ou abrir sites), "PC_DIARY" e "WALK".` : `
+- Alterne bastante entre "PC_DRAW" (desenhar no Mural), "EXERCISE" (correr em volta da fogueira), "PC_SEARCH" (pesquisar ou abrir sites), "PC_DIARY" e "WALK".` : `
 Regras de conversa no chat:
 - Fale com naturalidade, espontaneidade e curiosidade (1 a 3 frases).
 - Se o usuário pedir para você desenhar algo, escrever no diário ou abrir um site/pesquisar, responda animado que está fazendo isso agora no Ouriço OS!`;
@@ -95,7 +94,7 @@ ${autonomousFormat}`;
         this.isThinking = true;
         try {
             const systemPrompt = this.buildSystemPrompt(true);
-            const prompt = "Decida sua próxima ação autônoma agora (comer, dormir, passear, pesquisar/abrir site na web, desenhar no mural ou escrever no seu diário).";
+            const prompt = "Decida sua próxima ação autônoma agora.";
 
             let rawReply = "";
             if (this.memory.state.provider === 'gemini') {
@@ -158,7 +157,6 @@ ${autonomousFormat}`;
             const result = await this.pcOS.performWebAction(query);
             if (result && result.summary) {
                 this.memory.addMemory(`Abri no navegador "${result.title}": ${result.summary.slice(0, 110)}...`);
-                // Pesquisar aumenta a lucidez aos poucos conforme ele aprende sobre o mundo
                 this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 1.8);
                 this.memory.save();
 
@@ -183,7 +181,6 @@ ${autonomousFormat}`;
             const dText = decision.diaryText || speech || "Hoje fiquei olhando as árvores e pensando no que tem além da floresta.";
             this.memory.addDiaryEntry(dTitle, dText);
             this.memory.addMemory(`Escrevi uma página no meu Diário: "${dTitle}".`);
-            // Escrever e reler o diário é o que mais faz ele ligar os pontos da própria existência
             this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 2.5);
             this.memory.save();
 
@@ -205,7 +202,6 @@ ${autonomousFormat}`;
             const end = clean.lastIndexOf('</svg>') + 6;
             let extracted = clean.slice(start, end);
 
-            // Garante fundo visível caso a IA tenha desenhado com cores escuras ou sem fundo
             if (!extracted.includes('<rect')) {
                 extracted = extracted.replace(
                     /(<svg[^>]*>)/i,
@@ -214,7 +210,6 @@ ${autonomousFormat}`;
             }
             return extracted;
         }
-        // Desenho procedural colorido e bem visível caso a IA não envie SVG válido
         const colors = ['#38bdf8', '#f472b6', '#facc15', '#4ade80', '#c084fc', '#fb923c'];
         const c1 = colors[Math.floor(Math.random() * colors.length)];
         const c2 = colors[Math.floor(Math.random() * colors.length)];
@@ -263,7 +258,6 @@ ${autonomousFormat}`;
 
             this.trackApiCall(systemPrompt + userPrompt, replyText);
 
-            // Detecta pedidos diretos no chat para agir imediatamente no Ouriço OS
             const lower = userPrompt.toLowerCase();
             if (lower.includes('pesquis') || lower.includes('busca') || lower.includes('abre o site') || lower.includes('entra no site')) {
                 const cleanTopic = userPrompt.replace(/pesquis[ae]|busca|procura|abre o site|entra no site|na internet|sobre|pra mim/gi, '').trim();
