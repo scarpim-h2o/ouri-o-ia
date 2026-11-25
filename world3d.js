@@ -15,6 +15,7 @@ export class World3D {
         this.POIS = {
             center: new THREE.Vector3(0, 0, 0.5),
             bush: new THREE.Vector3(-3.4, 0, -1.8),
+            pond: new THREE.Vector3(3.1, 0, 2.2),
             pcDesk: new THREE.Vector3(3.2, 0, -1.6),
             campfire: new THREE.Vector3(0, 0, -2.5),
             bedLog: new THREE.Vector3(-2.6, 0, 2.4)
@@ -120,6 +121,9 @@ export class World3D {
 
         // Mesa de madeira com o PCzinho
         this.buildPCDesk();
+
+        // Laguinho de água cristalina para beber
+        this.buildPond();
 
         // Fogueira
         this.buildCampfire();
@@ -227,6 +231,35 @@ export class World3D {
         deskGroup.add(keyboard);
 
         this.scene.add(deskGroup);
+    }
+
+    buildPond() {
+        const pondGroup = new THREE.Group();
+        pondGroup.position.copy(this.POIS.pond);
+
+        const water = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.15, 1.15, 0.06, 24),
+            new THREE.MeshStandardMaterial({
+                color: 0x0ea5e9,
+                roughness: 0.15,
+                metalness: 0.2,
+                emissive: 0x0369a1,
+                emissiveIntensity: 0.25
+            })
+        );
+        water.position.y = 0.02;
+        pondGroup.add(water);
+
+        const rimGeo = new THREE.DodecahedronGeometry(0.2, 0);
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85 });
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const rock = new THREE.Mesh(rimGeo, rimMat);
+            rock.position.set(Math.cos(angle) * 1.2, 0.08, Math.sin(angle) * 1.2);
+            pondGroup.add(rock);
+        }
+
+        this.scene.add(pondGroup);
     }
 
     buildCampfire() {
