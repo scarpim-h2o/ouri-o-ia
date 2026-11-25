@@ -32,6 +32,16 @@ export class MemoryManager {
                 gemini: '',
                 openai: ''
             },
+            customModel: '',
+            activeDetectedModel: '',
+            aiPaused: false,
+            dailyLimitCalls: 60, // Limite seguro diário configurável para evitar cobranças
+            usageTracker: {
+                date: new Date().toISOString().slice(0, 10),
+                geminiCalls: 0,
+                openaiCalls: 0,
+                estimatedTokens: 0
+            },
             // Já nasce com 1 dia (24h) de vida completados
             birthTimestamp: Date.now() - ONE_DAY_MS,
             lastSeenTimestamp: Date.now(),
@@ -67,6 +77,10 @@ export class MemoryManager {
                 apiKeys: {
                     ...defaults.apiKeys,
                     ...(parsed.apiKeys || {})
+                },
+                usageTracker: {
+                    ...defaults.usageTracker,
+                    ...(parsed.usageTracker || {})
                 }
             };
         } catch (err) {
@@ -91,6 +105,49 @@ export class MemoryManager {
 
     getActiveApiKey() {
         return this.state.apiKeys[this.state.provider] || '';
+    }
+
+    ensureTodayUsage() {
+        const today = new Date().toISOString().slice(0, 10);
+        if (!this.state.usageTracker || this.state.usageTracker.date !== today) {
+            this.state.usageTracker = {
+                date: today,
+                geminiCalls: 0,
+                openaiCalls: 0,
+                estimatedTokens: 0
+            };
+            this.save();
+        }
+    }
+
+    recordUsage(tokens = 300) {
+        this.ensureTodayUsage();
+        if (this.state.provider === 'gemini') {
+            this.state.usageTracker.geminiCalls += 1;
+        } else {
+            this.state.usageTracker.openaiCalls += 1;
+        }
+        this.state.usageTracker.estimatedTokens += tokens;
+        this.save();
+        return this.getDailyUsageStatus();
+    }
+
+    getDailyUsageStatus() {
+        this.ensureTodayUsage();
+        const used = this.state.provider === 'gemini'
+            ? this.state.usageTracker.geminiCalls
+            : this.state.usageTracker.openaiCalls;
+        const limit = Math.max(5, Number(this.state.dailyLimitCalls) || 60);
+        const percent = Math.min(100, Math.round((used / limit) * 100));
+
+        return {
+            used,
+            limit,
+            percent,
+            tokens: this.state.usageTracker.estimatedTokens,
+            isNearLimit: percent >= 80 && percent < 100,
+            isPaused: used >= limit
+        };
     }
 
     // Calcula passagem de tempo enquanto o site esteve fechado
