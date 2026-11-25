@@ -220,22 +220,34 @@ export class OuricoOS {
     initPaintCanvas() {
         const canvas = document.getElementById('ourico-paint-canvas');
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#090d16';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const resetCanvasBg = () => {
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        };
+        resetCanvasBg();
 
         const getPos = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const touch = e.touches && e.touches.length > 0 ? e.touches[0] : e;
             return {
-                x: ((clientX - rect.left) / rect.width) * canvas.width,
-                y: ((clientY - rect.top) / rect.height) * canvas.height
+                x: ((touch.clientX - rect.left) / (rect.width || 1)) * canvas.width,
+                y: ((touch.clientY - rect.top) / (rect.height || 1)) * canvas.height
             };
         };
 
         const start = (e) => {
+            e.preventDefault();
             this.isDrawing = true;
             const p = getPos(e);
+            ctx.strokeStyle = this.brushColor;
+            ctx.fillStyle = this.brushColor;
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.fill();
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
         };
@@ -243,11 +255,14 @@ export class OuricoOS {
             if (!this.isDrawing) return;
             e.preventDefault();
             const p = getPos(e);
-            ctx.lineTo(p.x, p.y);
             ctx.strokeStyle = this.brushColor;
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 6;
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineTo(p.x, p.y);
             ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
         };
         const end = () => { this.isDrawing = false; };
 
@@ -268,8 +283,7 @@ export class OuricoOS {
         });
 
         document.getElementById('paint-clear-btn').addEventListener('click', () => {
-            ctx.fillStyle = '#090d16';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            resetCanvasBg();
         });
 
         document.getElementById('paint-save-mural-btn').addEventListener('click', () => {
