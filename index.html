@@ -80,6 +80,8 @@
                         <span>⏱️ Vivo: <strong id="alive-timer" class="text-emerald-400">1d 00h 00m</strong></span>
                         <span class="text-slate-600">•</span>
                         <span id="sky-phase-badge" class="text-sky-300">☀️ Dia</span>
+                        <span class="text-slate-600">•</span>
+                        <span id="usage-mini-badge" class="text-slate-400" title="Uso diário da API">📊 0%</span>
                     </p>
                 </div>
             </div>
@@ -137,6 +139,17 @@
         Mensagem do sistema
     </div>
 
+    <!-- Banner de Alerta de Limite/Gasto da API -->
+    <div id="budget-alert-banner" class="hidden fixed top-32 left-1/2 -translate-x-1/2 z-40 max-w-md w-[92vw] bg-amber-950/95 border border-amber-500 text-amber-100 px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 text-xs">
+        <span id="budget-alert-text" class="leading-snug font-medium">⚠️ Atenção: perto do limite diário!</span>
+        <div class="flex items-center gap-1.5 shrink-0">
+            <button id="btn-banner-switch" type="button" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition">
+                Trocar / Pausar
+            </button>
+            <button id="btn-banner-close" type="button" class="px-2 py-1 text-amber-300 hover:text-white">✕</button>
+        </div>
+    </div>
+
     <!-- Controles Inferiores + Chat -->
     <footer class="fixed bottom-0 left-0 right-0 z-20 p-3 sm:p-4 pointer-events-none flex flex-col items-center">
         <div class="max-w-2xl w-full flex flex-col gap-2 pointer-events-auto">
@@ -188,39 +201,64 @@
 
     <!-- Modal de Configurações -->
     <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-between">
                 <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                    <span>⚙️</span> Cérebro da IA (Multi-API)
+                    <span>⚙️</span> Cérebro Universal & Limite
                 </h2>
                 <button id="close-settings" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
             </div>
 
-            <p class="text-xs text-slate-300 leading-relaxed">
-                Se bater o limite diário de uma IA, basta trocar para a outra aqui. <strong>As memórias, o tempo vivo e a autonomia continuam idênticos!</strong>
-            </p>
+            <!-- Painel de Monitoramento de Gasto / Limite -->
+            <div class="bg-slate-800/80 border border-slate-700 p-3 rounded-2xl space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-300 font-semibold">📊 Uso Hoje (<span id="settings-usage-provider">Gemini</span>)</span>
+                    <span id="settings-usage-text" class="font-bold text-emerald-400">0 / 60 chamadas (0%)</span>
+                </div>
+                <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                    <div id="settings-usage-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
+                        <input type="checkbox" id="check-pause-ai" class="w-4 h-4 rounded accent-amber-500">
+                        <span>Pausar IA agora (economizar limite)</span>
+                    </label>
+                    <span id="detected-model-label" class="text-[10px] text-slate-400">Auto</span>
+                </div>
+            </div>
 
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Ouriço</label>
-                    <input type="text" id="input-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <div class="space-y-2.5">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Ouriço</label>
+                        <input type="text" id="input-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Alerta de Limite/Dia</label>
+                        <input type="number" id="input-daily-limit" min="5" max="5000" value="60" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">Provedor Ativo Agora</label>
                     <select id="select-provider" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        <option value="gemini">Google Gemini (gemini-2.5-flash + Google Search)</option>
-                        <option value="openai">OpenAI ChatGPT (gpt-4o-mini)</option>
+                        <option value="gemini">Google Gemini (Auto-detecta modelo novo ou antigo)</option>
+                        <option value="openai">OpenAI ChatGPT (Auto-detecta modelo novo ou antigo)</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API Gemini (Salva no aparelho)</label>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Modelo Específico (Opcional — deixe vazio p/ Automático)</label>
+                    <input type="text" id="input-custom-model" placeholder="Ex: gemini-1.5-flash, gemini-2.5-flash, gpt-4o-mini..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API Gemini (Antiga ou Nova)</label>
                     <input type="password" id="input-gemini-key" placeholder="Cole sua chave do Gemini..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API OpenAI / GPT (Salva no aparelho)</label>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API OpenAI / GPT (Antiga ou Nova)</label>
                     <input type="password" id="input-openai-key" placeholder="Cole sua chave da OpenAI..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
                 </div>
             </div>
@@ -285,6 +323,13 @@
         const hedgehog = new Hedgehog3D(world.scene, world.POIS);
         const brain = new AIBrain(memory, hedgehog, world, pcOS);
 
+        brain.setBudgetWarningCallback((warningMsg) => {
+            const banner = document.getElementById('budget-alert-banner');
+            document.getElementById('budget-alert-text').textContent = warningMsg;
+            banner.classList.remove('hidden');
+            updateHUD();
+        });
+
         const clock = new THREE.Clock();
         let speechTimeout = null;
         let isChatMinimized = false;
@@ -313,11 +358,24 @@
             document.getElementById('hedgehog-name-display').textContent = s.name;
             document.getElementById('alive-timer').textContent = memory.getFormattedAliveDuration();
             document.getElementById('sky-phase-badge').textContent = world.getSkyLabel();
-            document.getElementById('provider-badge').textContent = s.provider === 'gemini' ? 'Gemini' : 'GPT';
+            document.getElementById('provider-badge').textContent = s.aiPaused
+                ? '⏸️ Pausada'
+                : (s.provider === 'gemini' ? 'Gemini' : 'GPT');
+
+            const usage = memory.getDailyUsageStatus();
+            const usageMini = document.getElementById('usage-mini-badge');
+            usageMini.textContent = `📊 ${usage.percent}%`;
+            usageMini.className = usage.percent >= 80
+                ? 'text-amber-400 font-bold'
+                : 'text-slate-400';
 
             const dot = document.getElementById('ai-status-dot');
-            if (memory.getActiveApiKey()) {
-                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900";
+            if (s.aiPaused || usage.isPaused) {
+                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-slate-900";
+            } else if (memory.getActiveApiKey()) {
+                dot.className = usage.isNearLimit
+                    ? "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-slate-900"
+                    : "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900";
             } else {
                 dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-slate-900";
             }
@@ -425,13 +483,39 @@
 
             // Modal API Settings
             const modalSettings = document.getElementById('modal-settings');
-            document.getElementById('btn-settings').addEventListener('click', () => {
+            const openSettingsModal = () => {
                 const s = memory.state;
+                const usage = memory.getDailyUsageStatus();
                 document.getElementById('input-name').value = s.name;
+                document.getElementById('input-daily-limit').value = s.dailyLimitCalls || 60;
                 document.getElementById('select-provider').value = s.provider;
+                document.getElementById('input-custom-model').value = s.customModel || '';
                 document.getElementById('input-gemini-key').value = s.apiKeys.gemini || '';
                 document.getElementById('input-openai-key').value = s.apiKeys.openai || '';
+                document.getElementById('check-pause-ai').checked = !!s.aiPaused;
+
+                document.getElementById('settings-usage-provider').textContent = s.provider === 'gemini' ? 'Gemini' : 'GPT';
+                document.getElementById('settings-usage-text').textContent = `${usage.used} / ${usage.limit} chamadas (${usage.percent}%)`;
+                const bar = document.getElementById('settings-usage-bar');
+                bar.style.width = `${usage.percent}%`;
+                bar.className = usage.percent >= 80
+                    ? 'h-full bg-amber-500 transition-all duration-300'
+                    : 'h-full bg-emerald-500 transition-all duration-300';
+
+                document.getElementById('detected-model-label').textContent = s.activeDetectedModel
+                    ? `Ativo: ${s.activeDetectedModel}`
+                    : 'Modo Automático';
+
                 modalSettings.classList.remove('hidden');
+            };
+
+            document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+            document.getElementById('btn-banner-switch').addEventListener('click', () => {
+                document.getElementById('budget-alert-banner').classList.add('hidden');
+                openSettingsModal();
+            });
+            document.getElementById('btn-banner-close').addEventListener('click', () => {
+                document.getElementById('budget-alert-banner').classList.add('hidden');
             });
 
             document.getElementById('close-settings').addEventListener('click', () => {
@@ -443,12 +527,20 @@
                 const newProvider = document.getElementById('select-provider').value;
                 const geminiKey = document.getElementById('input-gemini-key').value.trim();
                 const openaiKey = document.getElementById('input-openai-key').value.trim();
+                const customModel = document.getElementById('input-custom-model').value.trim();
+                const dailyLimit = parseInt(document.getElementById('input-daily-limit').value, 10) || 60;
+                const aiPaused = document.getElementById('check-pause-ai').checked;
 
                 const changedProvider = memory.state.provider !== newProvider;
                 if (newName) memory.state.name = newName;
                 memory.state.provider = newProvider;
                 memory.state.apiKeys = { gemini: geminiKey, openai: openaiKey };
+                memory.state.customModel = customModel;
+                memory.state.dailyLimitCalls = Math.max(5, dailyLimit);
+                memory.state.aiPaused = aiPaused;
                 memory.save();
+
+                brain.cachedGeminiModels = null; // Força redetecção de modelos se a chave mudou
 
                 if (changedProvider) {
                     memory.addMemory(`Troquei meu motor de pensamento para ${newProvider.toUpperCase()}, mas continuo sendo eu mesmo.`);
@@ -456,25 +548,12 @@
 
                 updateHUD();
                 modalSettings.classList.add('hidden');
-                showToast(`Salvo! ${memory.state.name} agora está 100% autônomo e online.`);
+                showToast(aiPaused
+                    ? "⏸️ IA pausada com segurança. Nenhuma chamada será gasta."
+                    : `Salvo! ${memory.state.name} conectado (detecção automática de modelo ativa).`);
 
-                // Assim que salvar a chave, ele já faz a primeira decisão sozinho!
-                brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
-            });
-
-            let resetConfirm = false;
-            const resetBtn = document.getElementById('btn-reset-world');
-            resetBtn.addEventListener('click', () => {
-                if (!resetConfirm) {
-                    resetConfirm = true;
-                    resetBtn.textContent = "Clique de novo p/ apagar tudo";
-                    setTimeout(() => {
-                        resetConfirm = false;
-                        resetBtn.textContent = "Resetar Vida";
-                    }, 4000);
-                } else {
-                    memory.resetAll();
-                    location.reload();
+                if (!aiPaused) {
+                    brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
                 }
             });
 
