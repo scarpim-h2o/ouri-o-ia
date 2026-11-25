@@ -40,29 +40,30 @@ export class AIBrain {
         }
 
         const autonomousFormat = isAutonomous ? `
-MODO AUTÔNOMO ATIVO: Você decide sozinho o que fazer agora!
+MODO AUTÔNOMO ATIVO: Você tem livre arbítrio total! Decida sozinho o que quer fazer agora!
 Responda OBRIGATORIAMENTE em JSON puro (sem \`\`\`json), neste formato exato:
 {
-  "action": "EAT" | "SLEEP" | "WALK" | "PC_SEARCH" | "PC_DRAW" | "PC_DIARY",
+  "action": "EAT" | "DRINK" | "EXERCISE" | "SLEEP" | "WALK" | "PC_SEARCH" | "PC_DRAW" | "PC_DIARY",
   "searchQuery": "termo de pesquisa ou URL de site (ex: nasa.gov) se action for PC_SEARCH",
-  "artTitle": "título fofo do desenho se action for PC_DRAW",
-  "artSvg": "código <svg viewBox='0 0 300 200' xmlns='http://www.w3.org/2000/svg'>...</svg> simples e colorido desenhando o que você imaginou (apenas se action for PC_DRAW)",
+  "artTitle": "título criativo do desenho se action for PC_DRAW",
+  "artSvg": "código <svg viewBox='0 0 300 200' xmlns='http://www.w3.org/2000/svg'><rect width='300' height='200' fill='#1e293b'/>...</svg> colorido e bem desenhado com formas geométricas visíveis (apenas se action for PC_DRAW)",
   "diaryTitle": "título curto da página do diário se action for PC_DIARY",
   "diaryText": "texto sincero escrevendo no seu diário o que você descobriu ou sentiu hoje, conectando com suas anotações anteriores (se action for PC_DIARY)",
   "speech": "sua fala curta (1 a 2 frases) com jeito espontâneo e curioso"
 }
 Regras de escolha:
-- Se Saciedade < 45%, escolha "EAT".
+- Se Hidratação/Sede < 45%, escolha "DRINK" para ir beber água no lago.
+- Se Saciedade/Fome < 45%, escolha "EAT" para comer frutinhas.
 - Se Energia < 35%, escolha "SLEEP".
-- Alterne bastante entre "PC_SEARCH" (pesquisar coisas do mundo ou abrir sites), "PC_DRAW" (fazer um desenho pro Mural), "PC_DIARY" (escrever no Diário e refletir sobre suas anotações) e "WALK".` : `
+- Alterne bastante entre "PC_DRAW" (desenhar qualquer coisa que der vontade no Mural — pode desenhar quantas vezes quiser!), "EXERCISE" (correr em volta da fogueira para se exercitar e gastar energia), "PC_SEARCH" (pesquisar ou abrir sites), "PC_DIARY" e "WALK".` : `
 Regras de conversa no chat:
 - Fale com naturalidade, espontaneidade e curiosidade (1 a 3 frases).
-- Se o usuário pedir para você desenhar algo, escrever no diário ou abrir um site/pesquisar, responda animado que vai fazer isso no Ouriço OS!`;
+- Se o usuário pedir para você desenhar algo, escrever no diário ou abrir um site/pesquisar, responda animado que está fazendo isso agora no Ouriço OS!`;
 
-        return `Você é ${s.name}, um ouriço humanoide que vive numa clareira na floresta e tem um computador (Ouriço OS) com internet, Paint/Mural e Diário.
+        return `Você é ${s.name}, um ouriço humanoide que vive numa clareira na floresta com lago, fogueira, arbusto de frutas e um computador (Ouriço OS) com internet, Paint/Mural e Diário.
 Estado atual:
 - Tempo vivo: ${aliveText} | Horário: ${skyPhase}
-- Saciedade: ${Math.round(s.hunger)}% | Energia: ${Math.round(s.energy)}%
+- Saciedade: ${Math.round(s.hunger)}% | Hidratação: ${Math.round(s.thirst ?? 85)}% | Energia: ${Math.round(s.energy)}%
 - Nível de Lucidez (${Math.round(s.lucidity)}%): ${lucidityDirective}
 - Últimas páginas do seu Diário: ${recentDiary || 'Nenhuma ainda.'}
 - Lembranças recentes: ${s.memories.slice(-5).join(' | ')}
@@ -137,6 +138,14 @@ ${autonomousFormat}`;
             this.hedgehog.goEat();
             this.memory.addMemory(`Fui comer umas frutinhas vermelhas no arbusto.`);
             if (speech && onSpeak) onSpeak(speech);
+        } else if (action === 'DRINK') {
+            this.hedgehog.goDrink();
+            this.memory.addMemory(`Fui até o lago beber água fresca.`);
+            if (speech && onSpeak) onSpeak(speech || "Bateu sede, vou beber água no laguinho!");
+        } else if (action === 'EXERCISE') {
+            this.hedgehog.goExercise();
+            this.memory.addMemory(`Fiz exercício correndo em volta da fogueira!`);
+            if (speech && onSpeak) onSpeak(speech || "Hora do treino! Vou correr em volta da fogueira!");
         } else if (action === 'SLEEP') {
             this.hedgehog.goSleep();
             this.memory.addMemory(`Deitei no tronco para tirar um cochilo.`);
@@ -211,11 +220,19 @@ ${autonomousFormat}`;
         const c2 = colors[Math.floor(Math.random() * colors.length)];
         return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#1e293b"/><circle cx="245" cy="40" r="18" fill="#fef08a"/><polygon points="40,155 75,85 110,155" fill="#22c55e"/><circle cx="155" cy="110" r="36" fill="${c1}" stroke="#ffffff" stroke-width="3"/><circle cx="125" cy="125" r="22" fill="${c2}" stroke="#ffffff" stroke-width="2"/><text x="150" y="185" fill="#f8fafc" font-size="13" font-weight="bold" text-anchor="middle" font-family="sans-serif">${fallbackTitle}</text></svg>`;
     }
-        // Desenho procedural colorido caso a IA não envie SVG válido
-        const colors = ['#38bdf8', '#f472b6', '#facc15', '#4ade80', '#c084fc'];
-        const c1 = colors[Math.floor(Math.random() * colors.length)];
-        const c2 = colors[Math.floor(Math.random() * colors.length)];
-        return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#0f172a"/><circle cx="150" cy="95" r="45" fill="${c1}" opacity="0.85"/><circle cx="110" cy="110" r="28" fill="${c2}" opacity="0.8"/><text x="150" y="180" fill="#e2e8f0" font-size="13" text-anchor="middle" font-family="sans-serif">${fallbackTitle}</text></svg>`;
+
+    async generateSvgFromPrompt(apiKey, topic) {
+        const svgSystem = `Você é um ilustrador vetorial SVG. Crie APENAS código SVG puro (<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">...</svg>) desenhando o que foi pedido com cores vibrantes, formas claras (circle, rect, polygon, ellipse, path com stroke e fill bem visíveis) e fundo <rect width="300" height="200" fill="#1e293b"/>. Não escreva nenhum texto fora da tag <svg>.`;
+        const svgPrompt = `Desenhe em SVG colorido e bonito: ${topic}`;
+
+        let raw = "";
+        if (this.memory.state.provider === 'gemini') {
+            raw = await this.callGeminiUniversal(apiKey, svgSystem, svgPrompt, true);
+        } else {
+            raw = await this.callOpenAIUniversal(apiKey, svgSystem, svgPrompt, true);
+        }
+        this.trackApiCall(svgSystem + svgPrompt, raw);
+        return this.sanitizeSvg(raw, topic);
     }
 
     async ask(userPrompt) {
@@ -260,9 +277,11 @@ ${autonomousFormat}`;
                 }
             } else if (lower.includes('desenh')) {
                 this.hedgehog.goToPC();
-                const artTitle = userPrompt.replace(/desenh[ae]|faz um desenho|de um|de uma|pra mim/gi, '').trim() || 'Arte Especial';
-                this.memory.addArtwork(artTitle, this.sanitizeSvg(null, artTitle), false);
-                replyText += ` (Coloquei o desenho "${artTitle}" lá no Mural!)`;
+                const artTitle = userPrompt.replace(/desenh[ae]|faz um desenho|faz uma arte|de um|de uma|pra mim/gi, '').trim() || 'Arte Especial';
+                const generatedSvg = await this.generateSvgFromPrompt(apiKey, artTitle);
+                this.memory.addArtwork(artTitle, generatedSvg, false);
+                this.memory.addMemory(`Desenhei "${artTitle}" no Ouriço Paint e coloquei no Mural!`);
+                replyText += ` (Pronto! Desenhei "${artTitle}" e já pendurei lá no Mural do PC!)`;
             } else if (lower.includes('diário') || lower.includes('diario')) {
                 this.hedgehog.goToPC();
                 this.memory.addDiaryEntry('Conversa de hoje', `Conversei sobre: "${userPrompt}". Fiquei pensando nisso.`);
