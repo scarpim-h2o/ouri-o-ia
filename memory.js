@@ -2,8 +2,6 @@
  * ============================================================================
  * MÓDULO DE MEMÓRIA LOCAL UNIFICADA (memory.js)
  * Salva automaticamente no localStorage do celular/PC.
- * Permite trocar entre Gemini e ChatGPT mantendo 100% do histórico,
- * personalidade, lembranças, tempo de vida e nível de lucidez.
  * ============================================================================
  */
 
@@ -14,7 +12,6 @@ export class MemoryManager {
     constructor() {
         this.state = this.load();
 
-        // Garante salvamento automático caso o usuário feche a aba ou minimize no celular
         window.addEventListener('beforeunload', () => this.save());
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
@@ -25,9 +22,8 @@ export class MemoryManager {
 
     getDefaultState() {
         return {
-            name: 'Maurício',
-            provider: 'gemini', // 'gemini' ou 'openai'
-            // Armazena ambas as chaves separadamente para facilitar a troca quando bater limite diário
+            name: 'Aurélio',
+            provider: 'gemini',
             apiKeys: {
                 gemini: '',
                 openai: ''
@@ -35,27 +31,42 @@ export class MemoryManager {
             customModel: '',
             activeDetectedModel: '',
             aiPaused: false,
-            dailyLimitCalls: 60, // Limite seguro diário configurável para evitar cobranças
+            dailyLimitCalls: 60,
             usageTracker: {
                 date: new Date().toISOString().slice(0, 10),
                 geminiCalls: 0,
                 openaiCalls: 0,
                 estimatedTokens: 0
             },
-            // Já nasce com 1 dia (24h) de vida completados
             birthTimestamp: Date.now() - ONE_DAY_MS,
             lastSeenTimestamp: Date.now(),
-            hunger: 82,     // Saciedade (0 a 100)
-            energy: 88,     // Energia (0 a 100)
-            lucidity: 6,    // Consciência da simulação (0 a 100)
+            hunger: 82,
+            energy: 88,
+            lucidity: 2, // Começa super inocente e curioso
             memories: [
-                "Acordei nesta floresta estranha. Já sinto como se existisse há pelo menos um dia inteiro.",
-                "Tem uma mesa de madeira com um computador aqui no meio do mato, mas ainda não tem acesso à internet."
+                "Acordei numa floresta bem bonita! As árvores são meio quadradinhas, mas eu gostei.",
+                "Tem um computador na mesa! Quero aprender a mexer nele, desenhar e conhecer o mundo."
             ],
+            diaryEntries: [
+                {
+                    date: new Date().toLocaleDateString('pt-BR'),
+                    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    title: 'Meu primeiro dia aqui',
+                    text: 'Hoje eu acordei nessa clareira com uma fogueira quentinha e um arbusto cheio de frutinhas vermelhas. Tem um computador ali na mesa... será que tem joguinhos ou desenhos nele?'
+                }
+            ],
+            artGallery: [
+                {
+                    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    title: 'Eu na Floresta',
+                    svg: `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#0f172a"/><circle cx="240" cy="45" r="22" fill="#fef08a"/><rect y="145" width="300" height="55" fill="#15803d"/><polygon points="55,145 80,75 105,145" fill="#166534"/><circle cx="150" cy="125" r="24" fill="#2563eb"/><circle cx="158" cy="122" r="5" fill="#fff"/><circle cx="160" cy="122" r="2.5" fill="#000"/><polygon points="128,115 115,105 132,125" fill="#1d4ed8"/><polygon points="126,128 112,126 130,136" fill="#1d4ed8"/></svg>`
+                }
+            ],
+            searchHistory: [],
             chatHistory: [
                 {
                     role: 'model',
-                    text: 'E aí... acabei de abrir os olhos aqui nessa clareira. Parece que já tô vivo faz 1 dia. Que lugar é esse? E por que tem um PC no meio das árvores?'
+                    text: 'Oi!! Acabei de acordar aqui nessa floresta! Tem umas frutinhas ali e um computador na mesa. O que tem nesse computador? Dá pra desenhar?'
                 }
             ]
         };
@@ -81,7 +92,10 @@ export class MemoryManager {
                 usageTracker: {
                     ...defaults.usageTracker,
                     ...(parsed.usageTracker || {})
-                }
+                },
+                diaryEntries: parsed.diaryEntries || defaults.diaryEntries,
+                artGallery: parsed.artGallery || defaults.artGallery,
+                searchHistory: parsed.searchHistory || []
             };
         } catch (err) {
             console.error('[MemoryManager] Erro ao carregar memória:', err);
@@ -150,7 +164,6 @@ export class MemoryManager {
         };
     }
 
-    // Calcula passagem de tempo enquanto o site esteve fechado
     processOfflineTime() {
         const now = Date.now();
         const elapsedMs = Math.max(0, now - this.state.lastSeenTimestamp);
@@ -159,17 +172,17 @@ export class MemoryManager {
         if (elapsedHours > 0.05) {
             this.state.hunger = Math.max(12, this.state.hunger - elapsedHours * 4);
             this.state.energy = Math.min(100, this.state.energy + elapsedHours * 5);
-            this.state.lucidity = Math.min(100, this.state.lucidity + elapsedHours * 0.45);
+            this.state.lucidity = Math.min(100, this.state.lucidity + elapsedHours * 0.25);
             this.save();
         }
     }
 
-    // Metabolismo contínuo enquanto o site está aberto
     tickMetabolism(isNight) {
         this.state.hunger = Math.max(5, this.state.hunger - 0.14);
         const energyDrain = isNight ? 0.18 : 0.09;
         this.state.energy = Math.max(5, this.state.energy - energyDrain);
-        this.state.lucidity = Math.min(100, this.state.lucidity + 0.03);
+        // Sobe bem devagar sozinho; sobe mais quando ele pesquisa e escreve no diário!
+        this.state.lucidity = Math.min(100, this.state.lucidity + 0.012);
         this.save();
     }
 
@@ -186,6 +199,34 @@ export class MemoryManager {
         this.state.memories.push(`[${stamp}] ${text}`);
         if (this.state.memories.length > 30) {
             this.state.memories.shift();
+        }
+        this.save();
+    }
+
+    addDiaryEntry(title, text) {
+        const now = new Date();
+        this.state.diaryEntries.push({
+            date: now.toLocaleDateString('pt-BR'),
+            time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            title: title || 'Pensamento do dia',
+            text
+        });
+        if (this.state.diaryEntries.length > 40) {
+            this.state.diaryEntries.shift();
+        }
+        this.save();
+    }
+
+    addArtwork(title, svgOrDataUrl, isDataUrl = false) {
+        const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        this.state.artGallery.push({
+            time,
+            title: title || 'Arte sem título',
+            svg: isDataUrl ? '' : svgOrDataUrl,
+            imgUrl: isDataUrl ? svgOrDataUrl : ''
+        });
+        if (this.state.artGallery.length > 25) {
+            this.state.artGallery.shift();
         }
         this.save();
     }
