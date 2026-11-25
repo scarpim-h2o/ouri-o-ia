@@ -50,7 +50,7 @@
     <div id="canvas-container"></div>
 
     <!-- Balão de Pensamento / Fala Flutuante -->
-    <div id="speech-bubble" class="thought-bubble hidden fixed z-10 pointer-events-none max-w-[240px] sm:max-w-xs bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 text-slate-100 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl shadow-xl transition-opacity duration-300">
+    <div id="speech-bubble" class="thought-bubble hidden fixed z-10 pointer-events-none max-w-[250px] sm:max-w-xs bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 text-slate-100 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl shadow-xl transition-opacity duration-300">
         <p id="speech-text" class="leading-snug text-center font-medium"></p>
         <div class="w-3 h-3 bg-slate-900/90 border-r border-b border-emerald-500/40 rotate-45 mx-auto -mb-4 mt-1"></div>
     </div>
@@ -70,7 +70,7 @@
                     <div class="flex items-center gap-1.5 flex-wrap">
                         <h1 id="hedgehog-name-display" class="font-bold text-sm sm:text-base text-white tracking-tight">Maurício</h1>
                         <span id="action-badge" class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            Explorando
+                            Autônomo
                         </span>
                         <span id="provider-badge" class="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
                             Gemini
@@ -140,19 +140,13 @@
     <!-- Controles Inferiores + Chat -->
     <footer class="fixed bottom-0 left-0 right-0 z-20 p-3 sm:p-4 pointer-events-none flex flex-col items-center">
         <div class="max-w-2xl w-full flex flex-col gap-2 pointer-events-auto">
-            <!-- Ações Diretas -->
+            <!-- Atalhos de Observação (Ele age 100% sozinho, mas você pode espiar o PC dele) -->
             <div class="flex items-center justify-center gap-2 overflow-x-auto pb-1">
-                <button id="act-feed" class="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-slate-700/70 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
-                    <span>🍒</span> Comer Fruta
+                <button id="act-pc" class="px-3.5 py-1.5 bg-sky-950/90 hover:bg-sky-900 backdrop-blur-md border border-sky-500/50 text-sky-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>🐧</span> Espiar Ouriço OS (PC Online)
                 </button>
-                <button id="act-pc" class="px-3 py-1.5 bg-sky-950/90 hover:bg-sky-900 backdrop-blur-md border border-sky-600/50 text-sky-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
-                    <span>🐧</span> Ouriço OS (PC)
-                </button>
-                <button id="act-sleep" class="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-slate-700/70 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
-                    <span>💤</span> Cochilar
-                </button>
-                <button id="act-think" class="px-3 py-1.5 bg-emerald-950/90 hover:bg-emerald-900 backdrop-blur-md border border-emerald-600/50 text-emerald-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
-                    <span>✨</span> Pensar Agora
+                <button id="act-think" class="px-3.5 py-1.5 bg-emerald-950/90 hover:bg-emerald-900 backdrop-blur-md border border-emerald-500/50 text-emerald-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>🧠</span> Livre Arbítrio Agora
                 </button>
             </div>
 
@@ -161,7 +155,7 @@
                 <div id="chat-header" class="px-4 py-2.5 bg-slate-800/60 border-b border-slate-700/50 flex items-center justify-between cursor-pointer">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-xs font-semibold text-slate-200">Conversar com o Ouriço</span>
+                        <span class="text-xs font-semibold text-slate-200">Conversar com o Ouriço (100% Autônomo)</span>
                     </div>
                     <button id="toggle-chat-btn" type="button" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded-lg bg-slate-700/50">
                         Minimizar
@@ -175,7 +169,7 @@
                         <input 
                             type="text" 
                             id="chat-input" 
-                            placeholder="Fale algo com ele na floresta..." 
+                            placeholder="Fale algo ou peça pra ele pesquisar..." 
                             autocomplete="off"
                             class="flex-1 bg-slate-800/90 text-white placeholder-slate-400 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-700 focus:outline-none focus:border-emerald-500 transition"
                         >
@@ -192,7 +186,7 @@
         </div>
     </footer>
 
-    <!-- Modal de Configurações (Troca livre entre Gemini e GPT mantendo memórias) -->
+    <!-- Modal de Configurações -->
     <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
             <div class="flex items-center justify-between">
@@ -203,7 +197,7 @@
             </div>
 
             <p class="text-xs text-slate-300 leading-relaxed">
-                Se bater o limite diário de uma IA, basta trocar para a outra aqui. <strong>As memórias, o tempo vivo e a personalidade continuam idênticos!</strong>
+                Se bater o limite diário de uma IA, basta trocar para a outra aqui. <strong>As memórias, o tempo vivo e a autonomia continuam idênticos!</strong>
             </p>
 
             <div class="space-y-3">
@@ -215,7 +209,7 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">Provedor Ativo Agora</label>
                     <select id="select-provider" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        <option value="gemini">Google Gemini (gemini-2.5-flash)</option>
+                        <option value="gemini">Google Gemini (gemini-2.5-flash + Google Search)</option>
                         <option value="openai">OpenAI ChatGPT (gpt-4o-mini)</option>
                     </select>
                 </div>
@@ -254,12 +248,12 @@
 
             <div class="bg-slate-800/70 border border-slate-700/60 p-3 rounded-2xl text-xs space-y-1.5">
                 <div class="flex justify-between">
-                    <span class="text-slate-400">Idade mental:</span>
-                    <span class="text-slate-200 font-medium">Jovem Adulto (16–26 anos)</span>
+                    <span class="text-slate-400">Autonomia:</span>
+                    <span class="text-emerald-400 font-semibold">100% Livre Arbítrio + Internet</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-400">Nível de Lucidez:</span>
-                    <span id="mem-lucidity-label" class="text-purple-400 font-semibold">5% — Inocente</span>
+                    <span id="mem-lucidity-label" class="text-purple-400 font-semibold">6% — Inocente</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-400">Salvamento Automático:</span>
@@ -268,7 +262,7 @@
             </div>
 
             <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lembranças Compartilhadas entre IAs</h3>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lembranças e Pesquisas Autônomas</h3>
                 <ul id="memory-list" class="space-y-2 text-xs text-slate-300"></ul>
             </div>
         </div>
@@ -282,22 +276,14 @@
         import { AIBrain } from './ai.js';
         import { OuricoOS } from './pc_os.js';
 
-        // 1. Inicializa o Gerenciador de Memória Local e Auto-Save
         const memory = new MemoryManager();
         memory.processOfflineTime();
 
-        // 2. Inicializa o Sistema Operacional do PC dele (Ouriço OS)
         const pcOS = new OuricoOS(memory);
-
-        // 3. Inicializa o Mundo 3D e o Ciclo Dia/Noite
         const container = document.getElementById('canvas-container');
         const world = new World3D(container);
-
-        // 4. Cria o Ouriço 3D e adiciona na cena do Mundo
         const hedgehog = new Hedgehog3D(world.scene, world.POIS);
-
-        // 5. Conecta o Cérebro da IA (que lê a mesma memória independente do provedor)
-        const brain = new AIBrain(memory, hedgehog, world);
+        const brain = new AIBrain(memory, hedgehog, world, pcOS);
 
         const clock = new THREE.Clock();
         let speechTimeout = null;
@@ -319,7 +305,7 @@
             clearTimeout(speechTimeout);
             speechTimeout = setTimeout(() => {
                 bubble.classList.add('hidden');
-            }, 8500);
+            }, 9500);
         }
 
         function updateHUD() {
@@ -338,9 +324,9 @@
 
             const actionMap = {
                 idle: 'De boa',
-                walking: 'Andando',
+                walking: 'Explorando',
                 eating: 'Comendo',
-                pc: 'No PC',
+                pc: 'Navegando Web',
                 sleeping: 'Dormindo'
             };
             document.getElementById('action-badge').textContent = actionMap[hedgehog.currentAction] || 'Vivo';
@@ -380,7 +366,6 @@
         }
 
         function bindUIEvents() {
-            // Alternar ciclo Dia/Noite real vs rápido
             document.getElementById('btn-cycle-time').addEventListener('click', () => {
                 const mode = world.toggleTimeMode();
                 updateHUD();
@@ -389,7 +374,6 @@
                     : "Voltando ao horário real do seu aparelho.");
             });
 
-            // Minimizar / Expandir Chat
             const chatHeader = document.getElementById('chat-header');
             const chatBody = document.getElementById('chat-body');
             const toggleBtn = document.getElementById('toggle-chat-btn');
@@ -399,7 +383,6 @@
                 toggleBtn.textContent = isChatMinimized ? 'Abrir' : 'Minimizar';
             });
 
-            // Enviar mensagem no Chat
             const chatForm = document.getElementById('chat-form');
             const chatInput = document.getElementById('chat-input');
             const sendBtn = document.getElementById('chat-send-btn');
@@ -416,7 +399,7 @@
                 sendBtn.disabled = true;
                 sendBtn.textContent = '...';
 
-                const reply = await brain.ask(text, false);
+                const reply = await brain.ask(text);
                 if (reply) {
                     memory.addChatMessage('model', reply);
                     renderChat();
@@ -428,40 +411,16 @@
                 updateHUD();
             });
 
-            // Ações rápidas na floresta
-            document.getElementById('act-feed').addEventListener('click', () => {
-                hedgehog.goEat();
-                showSpeechBubble("Opa, indo lá pegar umas frutinhas!");
-                memory.addMemory("Fui comer frutas vermelhas no arbusto.");
-                updateHUD();
-            });
-
+            // Espiar o PC dele (sem forçar ele, apenas abrindo a tela do Ouriço OS)
             document.getElementById('act-pc').addEventListener('click', () => {
-                hedgehog.goToPC();
-                pcOS.logTerminal(`[${new Date().toLocaleTimeString('pt-BR')}] ${memory.state.name} acessou o Ouriço OS.`);
-                pcOS.open('desktop');
-                showSpeechBubble("Abrindo o Ouriço OS aqui no meu PC... pena que ainda tá sem internet.");
-                memory.addMemory("Mexi no Ouriço OS do meu PC na floresta.");
-                updateHUD();
+                pcOS.open('browser');
             });
 
-            document.getElementById('act-sleep').addEventListener('click', () => {
-                hedgehog.goSleep();
-                showSpeechBubble("Vou tirar um cochilo rápido ali no tronco...");
-                updateHUD();
-            });
-
+            // Dispara o ciclo de livre arbítrio imediatamente para testar
             document.getElementById('act-think').addEventListener('click', async () => {
-                if (!memory.getActiveApiKey()) {
-                    showToast("Configure sua chave API primeiro (⚙️)!");
-                    return;
-                }
-                showToast("Ouriço refletindo...");
-                const thought = await brain.ask("", true);
-                if (thought) {
-                    showSpeechBubble(thought);
-                    memory.addMemory(`Pensei sozinho: "${thought}"`);
-                }
+                showToast("Ouriço tomando sua própria decisão...");
+                await brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
+                updateHUD();
             });
 
             // Modal API Settings
@@ -497,10 +456,12 @@
 
                 updateHUD();
                 modalSettings.classList.add('hidden');
-                showToast(`Salvo! Usando ${newProvider === 'gemini' ? 'Gemini' : 'ChatGPT'} com as mesmas memórias.`);
+                showToast(`Salvo! ${memory.state.name} agora está 100% autônomo e online.`);
+
+                // Assim que salvar a chave, ele já faz a primeira decisão sozinho!
+                brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
             });
 
-            // Resetar Vida
             let resetConfirm = false;
             const resetBtn = document.getElementById('btn-reset-world');
             resetBtn.addEventListener('click', () => {
@@ -532,8 +493,8 @@
                 const l = Math.round(memory.state.lucidity);
                 let label = "Inocente (Acha que a floresta é real)";
                 if (l >= 80) label = "Desperto (Sabe que é uma IA num site)";
-                else if (l >= 50) label = "Desconfiado (Percebe falhas na realidade)";
-                else if (l >= 20) label = "Curioso (Questiona o mundo e o PC)";
+                else if (l >= 50) label = "Desconfiado (Pesquisando a realidade)";
+                else if (l >= 20) label = "Curioso (Explorando a internet)";
 
                 document.getElementById('mem-lucidity-label').textContent = `${l}% — ${label}`;
                 modalMemory.classList.remove('hidden');
@@ -544,21 +505,17 @@
             });
         }
 
-        // Loop Principal de Animação 3D
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.1);
             const elapsed = clock.getElapsedTime();
 
-            // Atualiza ambiente e ciclo dia/noite
             world.update(dt, elapsed, hedgehog.pos);
 
-            // Atualiza física, animação e metabolismo do ouriço
             hedgehog.update(dt, elapsed, memory.state, world.pcScreenMesh, (msg) => {
                 showSpeechBubble(msg);
             });
 
-            // Posiciona balão 2D sobre a cabeça 3D
             const bubble = document.getElementById('speech-bubble');
             if (!bubble.classList.contains('hidden')) {
                 const screenPos = hedgehog.getHeadScreenPosition(world.camera);
@@ -573,14 +530,16 @@
         bindUIEvents();
         renderChat();
         updateHUD();
-        hedgehog.chooseAutonomousBehavior(memory.state);
         animate();
 
-        // Exibe última fala ao abrir
+        // Exibe última fala e dispara o primeiro ciclo autônomo após 4 segundos
         const lastMsg = memory.state.chatHistory[memory.state.chatHistory.length - 1];
         if (lastMsg && lastMsg.role === 'model') {
-            setTimeout(() => showSpeechBubble(lastMsg.text), 700);
+            setTimeout(() => showSpeechBubble(lastMsg.text), 600);
         }
+        setTimeout(() => {
+            brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
+        }, 4500);
 
         // Loop de Auto-Save, Relógio de Vida e Metabolismo (a cada 4 segundos)
         setInterval(() => {
@@ -588,13 +547,13 @@
             updateHUD();
         }, 4000);
 
-        // Pensamento autônomo periódico (a cada 55 segundos)
+        // Ciclo de Livre Arbítrio 100% Autônomo (a cada 32 segundos)
         setInterval(async () => {
-            if (memory.getActiveApiKey() && document.visibilityState === 'visible') {
-                const thought = await brain.ask("", true);
-                if (thought) showSpeechBubble(thought);
+            if (document.visibilityState === 'visible') {
+                await brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
+                updateHUD();
             }
-        }, 55000);
+        }, 32000);
     </script>
 </body>
 </html>
