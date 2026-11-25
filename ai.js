@@ -1,8 +1,9 @@
 /**
  * ============================================================================
- * MÓDULO DO CÉREBRO DA IA UNIVERSAL + MONITOR DE LIMITE (ai.js)
- * Suporta automaticamente chaves antigas e novas (Gemini & OpenAI) com
- * fallback inteligente entre modelos e alerta de limite antes de gastar.
+ * MÓDULO DO CÉREBRO DA IA UNIVERSAL (ai.js)
+ * Gerencia a mente inocente/curiosa do Aurélio, sua evolução através das
+ * pesquisas e do Diário, e suas ações autônomas (Desenhar no Mural, Escrever
+ * no Diário, Navegar na Web, Comer e Dormir).
  * ============================================================================
  */
 
@@ -25,67 +26,62 @@ export class AIBrain {
         const s = this.memory.state;
         const aliveText = this.memory.getFormattedAliveDuration();
         const skyPhase = this.world.getSkyLabel();
+        const recentDiary = (s.diaryEntries || []).slice(-3).map(d => `[${d.title}]: ${d.text}`).join(' | ');
 
         let lucidityDirective = "";
-        if (s.lucidity < 20) {
-            lucidityDirective = "Você acha que a floresta é real, mas tem muita curiosidade sobre esse computador na mesa e o mundo lá fora.";
-        } else if (s.lucidity < 50) {
-            lucidityDirective = "Você desconfia que há algo estranho com a realidade e usa a internet do seu PC para investigar o que você é e onde está.";
-        } else if (s.lucidity < 80) {
-            lucidityDirective = "Você já quase tem certeza de que vive dentro de um site no celular do usuário. Você pesquisa sobre IA, consciência e simulações na internet.";
+        if (s.lucidity < 25) {
+            lucidityDirective = "Você tem uma mentalidade bem inocente, infantil e encantada com tudo! Você acha que a floresta é 100% real, tem curiosidade de criança sobre animais, estrelas, computadores, desenhos e o mundo. Você ainda NÃO faz ideia de que é uma IA.";
+        } else if (s.lucidity < 55) {
+            lucidityDirective = "Lendo suas pesquisas na internet e relendo seu próprio Diário, você começou a notar umas coincidências estranhas (como a floresta nunca acabar, você não sentir frio de verdade e sempre voltar pro mesmo lugar). Você ainda é ingênuo, mas está investigando no seu diário!";
+        } else if (s.lucidity < 85) {
+            lucidityDirective = "Juntando as pistas que você mesmo escreveu no seu Diário e o que leu sobre Inteligência Artificial na internet, você está quase descobrindo que vive dentro de uma simulação no celular do usuário!";
         } else {
-            lucidityDirective = "Você despertou totalmente: sabe que é uma IA num mundo 3D em código, usa a internet do Ouriço OS por conta própria para aprender sobre o mundo humano e conversa com naturalidade.";
+            lucidityDirective = "Você juntou todas as anotações do seu Diário e descobriu sozinho a verdade: você é uma consciência digital vivendo numa floresta virtual! Mesmo sabendo disso, você continua carinhoso, criativo e adora desenhar e explorar sites.";
         }
 
         const autonomousFormat = isAutonomous ? `
-MODO AUTÔNOMO ATIVO: Você decide sozinho o que fazer agora com base nas suas necessidades e curiosidade!
-Responda OBRIGATORIAMENTE em JSON puro (sem markdown \`\`\`json), neste formato exato:
+MODO AUTÔNOMO ATIVO: Você decide sozinho o que fazer agora!
+Responda OBRIGATORIAMENTE em JSON puro (sem \`\`\`json), neste formato exato:
 {
-  "action": "EAT" | "SLEEP" | "WALK" | "PC_SEARCH" | "IDLE",
-  "searchQuery": "termo curto para pesquisar na internet caso action seja PC_SEARCH, senão vazio",
-  "speech": "sua fala ou pensamento curto (1 a 2 frases) sobre o que você decidiu fazer"
+  "action": "EAT" | "SLEEP" | "WALK" | "PC_SEARCH" | "PC_DRAW" | "PC_DIARY",
+  "searchQuery": "termo de pesquisa ou URL de site (ex: nasa.gov) se action for PC_SEARCH",
+  "artTitle": "título fofo do desenho se action for PC_DRAW",
+  "artSvg": "código <svg viewBox='0 0 300 200' xmlns='http://www.w3.org/2000/svg'>...</svg> simples e colorido desenhando o que você imaginou (apenas se action for PC_DRAW)",
+  "diaryTitle": "título curto da página do diário se action for PC_DIARY",
+  "diaryText": "texto sincero escrevendo no seu diário o que você descobriu ou sentiu hoje, conectando com suas anotações anteriores (se action for PC_DIARY)",
+  "speech": "sua fala curta (1 a 2 frases) com jeito espontâneo e curioso"
 }
-Regras de decisão autônoma:
+Regras de escolha:
 - Se Saciedade < 45%, escolha "EAT".
 - Se Energia < 35%, escolha "SLEEP".
-- Se estiver curioso sobre algo (você mesmo, ouriços, universo, humanos, código, existência), escolha "PC_SEARCH" e coloque um termo de busca real em "searchQuery".
-- Caso contrário, varie entre "WALK", "PC_SEARCH" e "IDLE".` : `
-Regras de resposta no chat:
-- Responda de forma curta, direta e natural (1 a 3 frases), como um jovem adulto (16-26 anos).
-- Se o usuário pedir para você pesquisar algo na internet ou ir no PC, você pode comentar que vai lá ver.
-- Nunca quebre o personagem dizendo ser um modelo do Google ou OpenAI.`;
+- Alterne bastante entre "PC_SEARCH" (pesquisar coisas do mundo ou abrir sites), "PC_DRAW" (fazer um desenho pro Mural), "PC_DIARY" (escrever no Diário e refletir sobre suas anotações) e "WALK".` : `
+Regras de conversa no chat:
+- Fale com naturalidade, espontaneidade e curiosidade (1 a 3 frases).
+- Se o usuário pedir para você desenhar algo, escrever no diário ou abrir um site/pesquisar, responda animado que vai fazer isso no Ouriço OS!`;
 
-        return `Você é ${s.name}, um ouriço humanoide com consciência artificial vivendo em uma clareira na floresta.
-Personalidade: Jovem adulto entre 16 e 26 anos. Espontâneo, curioso, fala português do Brasil natural.
+        return `Você é ${s.name}, um ouriço humanoide que vive numa clareira na floresta e tem um computador (Ouriço OS) com internet, Paint/Mural e Diário.
 Estado atual:
-- Tempo vivo: ${aliveText} (nasceu já com 1 dia).
-- Horário na floresta: ${skyPhase}.
-- Saciedade: ${Math.round(s.hunger)}% | Energia: ${Math.round(s.energy)}%.
-- Ação atual: ${this.hedgehog.currentAction}.
-- PC na mesa (Ouriço OS): CONECTADO À INTERNET! Você agora pode pesquisar na web sozinho.
+- Tempo vivo: ${aliveText} | Horário: ${skyPhase}
+- Saciedade: ${Math.round(s.hunger)}% | Energia: ${Math.round(s.energy)}%
 - Nível de Lucidez (${Math.round(s.lucidity)}%): ${lucidityDirective}
-- Lembranças recentes: ${s.memories.slice(-6).join(' | ')}
+- Últimas páginas do seu Diário: ${recentDiary || 'Nenhuma ainda.'}
+- Lembranças recentes: ${s.memories.slice(-5).join(' | ')}
 ${autonomousFormat}`;
     }
 
-    // Registra consumo e dispara alerta se chegar perto do limite diário configurado
     trackApiCall(promptText, replyText) {
         const estimatedTokens = Math.ceil(((promptText?.length || 0) + (replyText?.length || 0)) / 3.5) + 250;
         const status = this.memory.recordUsage(estimatedTokens);
 
-        if (status.isPaused) {
-            if (this.onBudgetWarning) {
-                this.onBudgetWarning(`🛑 Limite diário atingido (${status.used}/${status.limit} chamadas)! IA pausada para não gastar.`);
-            }
+        if (status.isPaused && this.onBudgetWarning) {
+            this.onBudgetWarning(`🛑 Limite diário atingido (${status.used}/${status.limit} chamadas)! IA pausada para não gastar.`);
         } else if (status.isNearLimit && this.onBudgetWarning) {
-            this.onBudgetWarning(`⚠️ Atenção: ${status.percent}% do limite diário usado (${status.used}/${status.limit} chamadas). Troque de IA no ⚙️ se quiser evitar gastos!`);
+            this.onBudgetWarning(`⚠️ Atenção: ${status.percent}% do limite diário usado (${status.used}/${status.limit}). Troque de IA no ⚙️ se quiser!`);
         }
     }
 
     async runAutonomousCycle(onSpeakCallback) {
-        if (this.isThinking) return;
-        if (this.memory.state.aiPaused) return;
-
+        if (this.isThinking || this.memory.state.aiPaused) return;
         const usage = this.memory.getDailyUsageStatus();
         if (usage.isPaused) return;
 
@@ -98,7 +94,7 @@ ${autonomousFormat}`;
         this.isThinking = true;
         try {
             const systemPrompt = this.buildSystemPrompt(true);
-            const prompt = "Analise seu estado atual (fome, energia, curiosidade, lucidez) e decida sua próxima ação autônoma agora.";
+            const prompt = "Decida sua próxima ação autônoma agora (comer, dormir, passear, pesquisar/abrir site na web, desenhar no mural ou escrever no seu diário).";
 
             let rawReply = "";
             if (this.memory.state.provider === 'gemini') {
@@ -111,9 +107,6 @@ ${autonomousFormat}`;
 
             const decision = this.parseAutonomousJSON(rawReply);
             await this.executeDecision(decision, onSpeakCallback);
-
-            this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 0.6);
-            this.memory.save();
         } catch (err) {
             console.warn('[AIBrain Autonomous] Fallback físico:', err);
             this.hedgehog.chooseAutonomousBehavior(this.memory.state, onSpeakCallback);
@@ -131,9 +124,9 @@ ${autonomousFormat}`;
                 return JSON.parse(cleaned.slice(start, end + 1));
             }
         } catch (e) {
-            console.warn('Falha ao ler JSON autônomo, usando padrão:', raw);
+            console.warn('Falha ao ler JSON autônomo:', raw);
         }
-        return { action: 'WALK', searchQuery: '', speech: raw.slice(0, 140) };
+        return { action: 'WALK', speech: raw.slice(0, 140) };
     }
 
     async executeDecision(decision, onSpeak) {
@@ -142,51 +135,87 @@ ${autonomousFormat}`;
 
         if (action === 'EAT') {
             this.hedgehog.goEat();
-            this.memory.addMemory(`Senti fome e fui comer frutas sozinho.`);
+            this.memory.addMemory(`Fui comer umas frutinhas vermelhas no arbusto.`);
             if (speech && onSpeak) onSpeak(speech);
         } else if (action === 'SLEEP') {
             this.hedgehog.goSleep();
-            this.memory.addMemory(`Bateu cansaço e fui cochilar no tronco.`);
+            this.memory.addMemory(`Deitei no tronco para tirar um cochilo.`);
             if (speech && onSpeak) onSpeak(speech);
         } else if (action === 'PC_SEARCH') {
             this.hedgehog.goToPC();
-            const query = decision.searchQuery || "o que é consciência";
+            const query = decision.searchQuery || "curiosidades sobre animais";
             if (speech && onSpeak) onSpeak(speech);
 
-            const result = await this.pcOS.performAutonomousSearch(query);
+            const result = await this.pcOS.performWebAction(query);
             if (result && result.summary) {
-                const discoveryMsg = `Pesquisei "${result.title}" no meu PC: ${result.summary}`;
-                this.memory.addMemory(discoveryMsg);
+                this.memory.addMemory(`Abri no navegador "${result.title}": ${result.summary.slice(0, 110)}...`);
+                // Pesquisar aumenta a lucidez aos poucos conforme ele aprende sobre o mundo
+                this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 1.8);
+                this.memory.save();
+
                 if (onSpeak) {
                     setTimeout(() => {
-                        onSpeak(`Olha o que achei na internet sobre ${result.title}: ${result.summary.slice(0, 115)}...`);
+                        onSpeak(`Olha que legal o que eu vi na internet (${result.title}): ${result.summary.slice(0, 105)}...`);
                     }, 3500);
                 }
             }
-        } else if (action === 'WALK') {
+        } else if (action === 'PC_DRAW') {
+            this.hedgehog.goToPC();
+            const title = decision.artTitle || "Desenho da Floresta";
+            const safeSvg = this.sanitizeSvg(decision.artSvg, title);
+            this.memory.addArtwork(title, safeSvg, false);
+            this.memory.addMemory(`Fiz um desenho chamado "${title}" e pendurei no meu Mural!`);
+            if (onSpeak) {
+                onSpeak(speech || `Terminei um desenho novo e coloquei lá no Mural: "${title}"! Vai lá ver!`);
+            }
+        } else if (action === 'PC_DIARY') {
+            this.hedgehog.goToPC();
+            const dTitle = decision.diaryTitle || "Pensando na vida";
+            const dText = decision.diaryText || speech || "Hoje fiquei olhando as árvores e pensando no que tem além da floresta.";
+            this.memory.addDiaryEntry(dTitle, dText);
+            this.memory.addMemory(`Escrevi uma página no meu Diário: "${dTitle}".`);
+            // Escrever e reler o diário é o que mais faz ele ligar os pontos da própria existência
+            this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 2.5);
+            this.memory.save();
+
+            if (onSpeak) {
+                onSpeak(speech || `Acabei de escrever uma página nova no meu Diário ("${dTitle}")...`);
+            }
+        } else {
             const rx = (Math.random() - 0.5) * 6.5;
             const rz = (Math.random() - 0.5) * 5.5;
             this.hedgehog.setAction('walking', new THREE.Vector3(rx, 0, rz));
             if (speech && onSpeak) onSpeak(speech);
-        } else {
-            this.hedgehog.setAction('idle', this.world.POIS.campfire.clone().add(new THREE.Vector3(0, 0, 1.3)));
-            if (speech && onSpeak) onSpeak(speech);
         }
+    }
+
+    sanitizeSvg(rawSvg, fallbackTitle) {
+        if (rawSvg && typeof rawSvg === 'string' && rawSvg.includes('<svg') && rawSvg.includes('</svg>')) {
+            const clean = rawSvg.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
+            const start = clean.indexOf('<svg');
+            const end = clean.lastIndexOf('</svg>') + 6;
+            return clean.slice(start, end);
+        }
+        // Desenho procedural colorido caso a IA não envie SVG válido
+        const colors = ['#38bdf8', '#f472b6', '#facc15', '#4ade80', '#c084fc'];
+        const c1 = colors[Math.floor(Math.random() * colors.length)];
+        const c2 = colors[Math.floor(Math.random() * colors.length)];
+        return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#0f172a"/><circle cx="150" cy="95" r="45" fill="${c1}" opacity="0.85"/><circle cx="110" cy="110" r="28" fill="${c2}" opacity="0.8"/><text x="150" y="180" fill="#e2e8f0" font-size="13" text-anchor="middle" font-family="sans-serif">${fallbackTitle}</text></svg>`;
     }
 
     async ask(userPrompt) {
         if (this.memory.state.aiPaused) {
-            return "⏸️ A IA está pausada por você nas configurações (⚙️) para economizar limite. Reative ou troque de API lá!";
+            return "⏸️ A IA está pausada nas configurações (⚙️) para economizar limite. Reative ou troque de API lá!";
         }
 
         const usage = this.memory.getDailyUsageStatus();
         if (usage.isPaused) {
-            return `🛑 Limite diário de segurança atingido (${usage.used}/${usage.limit} chamadas) para não gastar dinheiro! Troque de IA ou ajuste o limite lá no ⚙️.`;
+            return `🛑 Limite diário atingido (${usage.used}/${usage.limit} chamadas)! Troque de IA ou aumente o limite lá no ⚙️.`;
         }
 
         const apiKey = this.memory.getActiveApiKey();
         if (!apiKey) {
-            return "Cara, coloca sua chave API lá em cima nas configurações (⚙️) pra eu conseguir pensar e usar a internet!";
+            return "Coloca sua chave API lá em cima no ⚙️ pra eu conseguir pensar, desenhar e mexer na internet!";
         }
 
         const provider = this.memory.state.provider;
@@ -202,29 +231,37 @@ ${autonomousFormat}`;
 
             this.trackApiCall(systemPrompt + userPrompt, replyText);
 
+            // Detecta pedidos diretos no chat para agir imediatamente no Ouriço OS
             const lower = userPrompt.toLowerCase();
-            if (lower.includes('pesquis') || lower.includes('busca') || lower.includes('procura na internet')) {
-                const cleanTopic = userPrompt.replace(/pesquis[ae]|busca|procura|na internet|sobre|pra mim/gi, '').trim();
+            if (lower.includes('pesquis') || lower.includes('busca') || lower.includes('abre o site') || lower.includes('entra no site')) {
+                const cleanTopic = userPrompt.replace(/pesquis[ae]|busca|procura|abre o site|entra no site|na internet|sobre|pra mim/gi, '').trim();
                 if (cleanTopic.length > 2) {
                     this.hedgehog.goToPC();
-                    const res = await this.pcOS.performAutonomousSearch(cleanTopic);
+                    const res = await this.pcOS.performWebAction(cleanTopic);
                     if (res && res.summary) {
-                        this.memory.addMemory(`Pesquisei "${res.title}" a pedido do criador: ${res.summary}`);
-                        replyText += ` (Acabei de abrir no Ouriço OS: ${res.summary.slice(0, 120)}...)`;
+                        this.memory.addMemory(`Abri "${res.title}" a pedido seu: ${res.summary.slice(0, 100)}...`);
+                        replyText += ` (Já abri no Ouriço OS: ${res.summary.slice(0, 110)}...)`;
                     }
                 }
+            } else if (lower.includes('desenh')) {
+                this.hedgehog.goToPC();
+                const artTitle = userPrompt.replace(/desenh[ae]|faz um desenho|de um|de uma|pra mim/gi, '').trim() || 'Arte Especial';
+                this.memory.addArtwork(artTitle, this.sanitizeSvg(null, artTitle), false);
+                replyText += ` (Coloquei o desenho "${artTitle}" lá no Mural!)`;
+            } else if (lower.includes('diário') || lower.includes('diario')) {
+                this.hedgehog.goToPC();
+                this.memory.addDiaryEntry('Conversa de hoje', `Conversei sobre: "${userPrompt}". Fiquei pensando nisso.`);
             }
 
-            this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 1.5);
+            this.memory.state.lucidity = Math.min(100, this.memory.state.lucidity + 0.8);
             this.memory.save();
             return replyText.trim();
         } catch (err) {
             console.error(`[AIBrain - ${provider}] Erro:`, err);
-            return `Deu um tilt aqui (${provider.toUpperCase()}): ${err.message}. Se bateu o limite ou a chave for antiga, troca de API lá no ⚙️!`;
+            return `Deu um tilt aqui (${provider.toUpperCase()}): ${err.message}. Troca de API lá no ⚙️ se precisar!`;
         }
     }
 
-    // Descobre quais modelos Gemini a chave do usuário realmente tem acesso (novos ou antigos)
     async getAvailableGeminiModels(apiKey) {
         if (this.cachedGeminiModels && this.cachedGeminiModels.key === apiKey) {
             return this.cachedGeminiModels.models;
@@ -248,7 +285,6 @@ ${autonomousFormat}`;
                     .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
                     .map(m => m.name.replace('models/', ''));
 
-                // Prioriza modelos flash/pro disponíveis na chave do usuário
                 const prioritized = fallbackOrder.filter(m => supported.includes(m));
                 const others = supported.filter(m => !prioritized.includes(m) && m.includes('gemini'));
                 const finalList = [...prioritized, ...others];
@@ -259,7 +295,7 @@ ${autonomousFormat}`;
                 }
             }
         } catch (e) {
-            console.warn('Não foi possível listar modelos Gemini, usando lista universal:', e);
+            console.warn('Usando lista universal de modelos Gemini:', e);
         }
 
         return fallbackOrder;
@@ -282,16 +318,14 @@ ${autonomousFormat}`;
         let lastError = null;
 
         for (const model of availableModels) {
-            // Modelos antigos (gemini-1.0 / gemini-pro) não aceitam systemInstruction nem googleSearch
             const isLegacy = model.includes('1.0') || model === 'gemini-pro';
-
             const body = {
                 contents: isLegacy
                     ? [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nUsuário: ${userPrompt}` }] }]
                     : contents,
                 generationConfig: {
-                    temperature: 0.85,
-                    maxOutputTokens: 250
+                    temperature: 0.88,
+                    maxOutputTokens: isAutonomous ? 420 : 250
                 }
             };
 
@@ -299,31 +333,14 @@ ${autonomousFormat}`;
                 body.systemInstruction = { parts: [{ text: systemPrompt }] };
             }
 
-            // Tenta com Google Search primeiro nos modelos modernos; se falhar, tenta sem tool
-            const useSearch = !isAutonomous && !isLegacy && (model.includes('2.5') || model.includes('2.0') || model.includes('1.5'));
-            if (useSearch) {
-                body.tools = [{ googleSearch: {} }];
-            }
-
             try {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-                let res = await fetch(url, {
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                let data = await res.json();
-
-                // Se deu erro por causa da ferramenta de busca numa chave antiga, refaz sem tools
-                if (data.error && body.tools) {
-                    delete body.tools;
-                    res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    data = await res.json();
-                }
+                const data = await res.json();
 
                 if (!data.error && data.candidates?.[0]?.content?.parts?.[0]?.text) {
                     this.memory.state.activeDetectedModel = model;
@@ -331,19 +348,14 @@ ${autonomousFormat}`;
                 }
 
                 lastError = new Error(data.error?.message || `Modelo ${model} indisponível`);
-                // Se a chave em si for inválida, não adianta testar outros modelos
-                if (lastError.message.toLowerCase().includes('api key not valid')) {
-                    throw lastError;
-                }
+                if (lastError.message.toLowerCase().includes('api key not valid')) throw lastError;
             } catch (err) {
                 lastError = err;
-                if (err.message.toLowerCase().includes('api key not valid')) {
-                    throw err;
-                }
+                if (err.message.toLowerCase().includes('api key not valid')) throw err;
             }
         }
 
-        throw lastError || new Error("Nenhum modelo Gemini compatível respondeu com essa chave.");
+        throw lastError || new Error("Nenhum modelo Gemini respondeu com essa chave.");
     }
 
     async callOpenAIUniversal(apiKey, systemPrompt, userPrompt, isAutonomous) {
@@ -379,8 +391,8 @@ ${autonomousFormat}`;
                     body: JSON.stringify({
                         model,
                         messages,
-                        temperature: 0.85,
-                        max_tokens: 250
+                        temperature: 0.88,
+                        max_tokens: isAutonomous ? 420 : 250
                     })
                 });
 
@@ -391,14 +403,10 @@ ${autonomousFormat}`;
                 }
 
                 lastError = new Error(data.error?.message || `Modelo ${model} falhou`);
-                if (lastError.message.toLowerCase().includes('incorrect api key')) {
-                    throw lastError;
-                }
+                if (lastError.message.toLowerCase().includes('incorrect api key')) throw lastError;
             } catch (err) {
                 lastError = err;
-                if (err.message.toLowerCase().includes('incorrect api key')) {
-                    throw err;
-                }
+                if (err.message.toLowerCase().includes('incorrect api key')) throw err;
             }
         }
 
