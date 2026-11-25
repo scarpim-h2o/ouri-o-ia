@@ -14,9 +14,10 @@ export class Hedgehog3D {
         this.targetPos = new THREE.Vector3(0, 0, 0);
         this.rotationY = 0;
 
-        this.currentAction = 'idle'; // 'idle', 'walking', 'eating', 'pc', 'sleeping'
+        this.currentAction = 'idle'; // 'idle', 'walking', 'eating', 'drinking', 'exercising', 'pc', 'sleeping'
         this.actionTimer = 10;
         this.walkCycle = 0;
+        this.exerciseAngle = 0;
 
         this.buildMesh();
     }
@@ -182,6 +183,19 @@ export class Hedgehog3D {
         this.setAction('eating', this.POIS.bush.clone().add(new THREE.Vector3(0.8, 0, 0.5)));
     }
 
+    goDrink() {
+        this.setAction('drinking', this.POIS.pond.clone().add(new THREE.Vector3(-1.25, 0, -0.3)));
+    }
+
+    goExercise() {
+        this.exerciseAngle = Math.atan2(
+            this.pos.z - this.POIS.campfire.z,
+            this.pos.x - this.POIS.campfire.x
+        );
+        this.setAction('exercising', this.POIS.campfire.clone().add(new THREE.Vector3(1.65, 0, 0)));
+        this.actionTimer = 16;
+    }
+
     goToPC() {
         this.setAction('pc', this.POIS.pcDesk.clone().add(new THREE.Vector3(0, 0, 0.9)));
     }
@@ -191,17 +205,23 @@ export class Hedgehog3D {
     }
 
     chooseAutonomousBehavior(memoryState, onSpeak = null) {
-        if (memoryState.hunger < 40) {
+        if ((memoryState.thirst ?? 85) < 42) {
+            this.goDrink();
+            if (onSpeak) onSpeak("Deu uma sede agora... vou beber uma aguinha fresca no lago!");
+        } else if (memoryState.hunger < 42) {
             this.goEat();
-            if (onSpeak) onSpeak("Tô batendo uma larica... vou pegar umas frutinhas ali.");
+            if (onSpeak) onSpeak("Tô com fome... vou pegar umas frutinhas vermelhas ali!");
         } else if (memoryState.energy < 30) {
             this.goSleep();
             if (onSpeak) onSpeak("Bateu um sono pesado... vou encostar ali.");
         } else {
             const roll = Math.random();
-            if (roll < 0.32) {
+            if (roll < 0.25) {
+                this.goExercise();
+                if (onSpeak) onSpeak("Bora gastar energia! Vou dar umas voltas correndo na fogueira!");
+            } else if (roll < 0.55) {
                 this.goToPC();
-            } else if (roll < 0.68) {
+            } else if (roll < 0.8) {
                 const rx = (Math.random() - 0.5) * 6;
                 const rz = (Math.random() - 0.5) * 5;
                 this.setAction('walking', new THREE.Vector3(rx, 0, rz));
@@ -212,6 +232,41 @@ export class Hedgehog3D {
     }
 
     update(dt, elapsed, memoryState, pcScreenMesh, onSpeak) {
+        // Modo corrida ao redor da fogueira (exercício físico)
+        if (this.currentAction === 'exercising') {
+            this.exerciseAngle += dt * 2.5;
+            const radius = 1.65;
+            const nextX = this.POIS.campfire.x + Math.cos(this.exerciseAngle) * radius;
+            const nextZ = this.POIS.campfire.z + Math.sin(this.exerciseAngle) * radius;
+
+            const moveDir = new THREE.Vector3(nextX - this.pos.x, 0, nextZ - this.pos.z);
+            if (moveDir.lengthSq() > 0.0001) {
+                this.rotationY = Math.atan2(moveDir.x, moveDir.z);
+            }
+            this.pos.set(nextX, 0, nextZ);
+
+            this.walkCycle += dt * 20;
+            this.leftLeg.rotation.x = Math.sin(this.walkCycle) * 0.95;
+            this.rightLeg.rotation.x = -Math.sin(this.walkCycle) * 0.95;
+            this.leftArm.rotation.x = -Math.sin(this.walkCycle) * 0.85;
+            this.rightArm.rotation.x = Math.sin(this.walkCycle) * 0.85;
+            this.group.position.y = Math.abs(Math.sin(this.walkCycle)) * 0.14;
+            this.group.rotation.x = 0.18;
+            this.eyelids.visible = false;
+
+            this.actionTimer -= dt;
+            if (this.actionTimer <= 0) {
+                this.group.rotation.x = 0;
+                this.chooseAutonomousBehavior(memoryState, onSpeak);
+            }
+
+            this.group.position.x = this.pos.x;
+            this.group.position.z = this.pos.z;
+            this.group.rotation.y = this.rotationY;
+            return;
+        }
+
+        this.group.rotation.x = 0;
         const dist = this.pos.distanceTo(this.targetPos);
         const isMoving = dist > 0.18;
 
@@ -241,7 +296,13 @@ export class Hedgehog3D {
                 this.eyelids.visible = false;
                 this.rightArm.rotation.x = -1.4 + Math.sin(elapsed * 8) * 0.35;
                 this.headGroup.rotation.x = Math.sin(elapsed * 8) * 0.15;
-                memoryState.hunger = Math.min(100, memoryState.hunger + dt * 3.5);
+                memoryState.hunger = Math.min(100, memoryState.hunger + dt * 4.5);
+            } else if (this.currentAction === 'drinking') {
+                this.eyelids.visible = false;
+                this.headGroup.rotation.x = 0.42 + Math.sin(elapsed * 7) * 0.12;
+                this.leftArm.rotation.x = -0.6;
+                this.rightArm.rotation.x = -0.6;
+                memoryState.thirst = Math.min(100, (memoryState.thirst ?? 85) + dt * 5.5);
             } else if (this.currentAction === 'pc') {
                 this.eyelids.visible = false;
                 this.rotationY = Math.PI - 0.6;
