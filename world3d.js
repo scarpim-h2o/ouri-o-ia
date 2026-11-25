@@ -1,14 +1,16 @@
 /**
  * ============================================================================
- * MÓDULO DO MUNDO 3D E CICLO DIA/NOITE (world3d.js)
- * Gerencia a floresta, o PC na mesa, lagoa, fogueira, sol, lua e vaga-lumes.
+ * MÓDULO DO MUNDO 3D (world3d.js)
+ * Inclui: Floresta, Cabana de Madeira, Quadro de Mural 3D com os desenhos reais,
+ * PC na mesa, Lagoa, Fogueira, Ciclo Dia/Noite e Estruturas Construíveis!
  * ============================================================================
  */
 
 export class World3D {
-    constructor(container) {
+    constructor(container, memoryManager) {
         this.container = container;
-        this.timeMode = 'real'; // 'real' ou 'fast'
+        this.memory = memoryManager;
+        this.timeMode = 'real';
         this.fastTimeHours = 10.0;
 
         this.POIS = {
@@ -17,28 +19,35 @@ export class World3D {
             pond: new THREE.Vector3(3.1, 0, 2.2),
             pcDesk: new THREE.Vector3(3.2, 0, -1.6),
             campfire: new THREE.Vector3(0, 0, -2.5),
-            bedLog: new THREE.Vector3(-2.6, 0, 2.4)
+            bedLog: new THREE.Vector3(-2.6, 0, 2.4),
+            cabin: new THREE.Vector3(-3.6, 0, -4.4),
+            muralBoard: new THREE.Vector3(1.4, 0, -4.0)
         };
 
-        this.camAngle = 0.4;
-        this.camHeight = 4.2;
-        this.camDistance = 8.5;
+        this.camAngle = 0.35;
+        this.camHeight = 4.3;
+        this.camDistance = 8.8;
         this.isDragging = false;
         this.prevPointer = { x: 0, y: 0 };
 
         this.fireParticles = [];
         this.fireflies = [];
+        this.muralSlots = [];
+        this.builtMeshes = {};
 
         this.initScene();
         this.buildForest();
+        this.buildCabin();
+        this.buildMuralBoard();
         this.buildCelestialBodies();
+        this.syncBuiltStructures();
         this.setupCameraControls();
     }
 
     initScene() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x38bdf8);
-        this.scene.fog = new THREE.FogExp2(0x7dd3fc, 0.034);
+        this.scene.fog = new THREE.FogExp2(0x7dd3fc, 0.032);
 
         this.camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 120);
 
@@ -49,7 +58,7 @@ export class World3D {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
 
-        this.ambientLight = new THREE.AmbientLight(0x94a3b8, 0.75);
+        this.ambientLight = new THREE.AmbientLight(0x94a3b8, 0.78);
         this.scene.add(this.ambientLight);
 
         this.sunLight = new THREE.DirectionalLight(0xfffbeb, 1.2);
@@ -68,7 +77,7 @@ export class World3D {
 
     buildForest() {
         const ground = new THREE.Mesh(
-            new THREE.CylinderGeometry(15, 15, 0.6, 32),
+            new THREE.CylinderGeometry(16, 16, 0.6, 32),
             new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.9 })
         );
         ground.position.y = -0.3;
@@ -76,7 +85,7 @@ export class World3D {
         this.scene.add(ground);
 
         const dirt = new THREE.Mesh(
-            new THREE.CylinderGeometry(4.8, 5.2, 0.05, 24),
+            new THREE.CylinderGeometry(5.2, 5.6, 0.05, 24),
             new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 1 })
         );
         dirt.position.y = 0.01;
@@ -84,7 +93,7 @@ export class World3D {
         this.scene.add(dirt);
 
         const treeCoords = [
-            [-6, -5], [-8, 1], [-5, 6], [0, -8], [6, -6], [8, 0], [5, 6], [-2, 8], [7, 4], [-7, -2]
+            [-6.5, -5.5], [-8.2, 1], [-5.5, 6.2], [0, -8.5], [6.5, -6.2], [8.2, 0], [5.5, 6.2], [-2, 8.2], [7.2, 4.2], [-7.2, -2]
         ];
         treeCoords.forEach(([x, z]) => {
             const tree = this.createTree();
@@ -94,6 +103,7 @@ export class World3D {
             this.scene.add(tree);
         });
 
+        // Arbusto de frutinhas
         const bushGroup = new THREE.Group();
         bushGroup.position.copy(this.POIS.bush);
         const bushMesh = new THREE.Mesh(
@@ -128,6 +138,186 @@ export class World3D {
         this.scene.add(benchLog);
     }
 
+    // Cabana de Madeira da Floresta (igual ao vídeo 2!)
+    buildCabin() {
+        const cabin = new THREE.Group();
+        cabin.position.copy(this.POIS.cabin);
+        cabin.rotation.y = 0.45;
+
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.85 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x3f230e, roughness: 0.9 });
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+        this.cabinWindowMat = new THREE.MeshStandardMaterial({
+            color: 0xfef08a,
+            emissive: 0xfacc15,
+            emissiveIntensity: 0.35
+        });
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.7, 1.9), wallMat);
+        body.position.y = 0.85;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        cabin.add(body);
+
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(1.75, 1.15, 4), roofMat);
+        roof.position.y = 2.25;
+        roof.rotation.y = Math.PI / 4;
+        roof.castShadow = true;
+        cabin.add(roof);
+
+        const door = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.05, 0.08), doorMat);
+        door.position.set(0.25, 0.525, 0.95);
+        cabin.add(door);
+
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+        knob.position.set(0.42, 0.52, 1.0);
+        cabin.add(knob);
+
+        const win = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.08), this.cabinWindowMat);
+        win.position.set(-0.48, 0.95, 0.95);
+        cabin.add(win);
+
+        this.scene.add(cabin);
+    }
+
+    // Quadro de Mural 3D na Floresta com os últimos 5 desenhos dele!
+    buildMuralBoard() {
+        const boardGroup = new THREE.Group();
+        boardGroup.position.copy(this.POIS.muralBoard);
+        boardGroup.rotation.y = -0.25;
+
+        const postMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.9 });
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8 });
+        const corkMat = new THREE.MeshStandardMaterial({ color: 0xd6b88d, roughness: 0.85 });
+
+        [-0.95, 0.95].forEach(px => {
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.9, 0.12), postMat);
+            post.position.set(px, 0.95, 0);
+            post.castShadow = true;
+            boardGroup.add(post);
+        });
+
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.35, 0.1), frameMat);
+        frame.position.set(0, 1.35, 0);
+        frame.castShadow = true;
+        boardGroup.add(frame);
+
+        const cork = new THREE.Mesh(new THREE.BoxGeometry(1.98, 1.15, 0.11), corkMat);
+        cork.position.set(0, 1.35, 0.01);
+        boardGroup.add(cork);
+
+        // 5 slots de papel no quadro (3 em cima, 2 embaixo — igual ao vídeo 1!)
+        const slotCoords = [
+            [-0.62, 1.62], [0, 1.62], [0.62, 1.62],
+            [-0.34, 1.08], [0.34, 1.08]
+        ];
+        slotCoords.forEach(([sx, sy]) => {
+            const paper = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.52, 0.42),
+                new THREE.MeshBasicMaterial({ color: 0xf8fafc })
+            );
+            paper.position.set(sx, sy, 0.072);
+            boardGroup.add(paper);
+            this.muralSlots.push(paper);
+        });
+
+        this.scene.add(boardGroup);
+    }
+
+    updateMuralBoardTextures() {
+        if (!this.memory || this.muralSlots.length === 0) return;
+        const recentArts = [...(this.memory.state.artGallery || [])].slice(-5).reverse();
+
+        this.muralSlots.forEach((slotMesh, idx) => {
+            const art = recentArts[idx];
+            if (!art) return;
+
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 192;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, 0, 256, 192);
+                ctx.drawImage(img, 0, 0, 256, 192);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                slotMesh.material.map = tex;
+                slotMesh.material.needsUpdate = true;
+            };
+
+            if (art.imgUrl) {
+                img.src = art.imgUrl;
+            } else if (art.svg) {
+                const blob = new Blob([art.svg], { type: 'image/svg+xml;charset=utf-8' });
+                img.src = URL.createObjectURL(blob);
+            }
+        });
+    }
+
+    // Sincroniza desejos construídos (Piscina, Telescópio, Jardim) no mundo 3D!
+    syncBuiltStructures() {
+        if (!this.memory) return;
+        this.memory.state.wishes.forEach(w => {
+            if (!w.built || this.builtMeshes[w.id]) return;
+
+            if (w.id === 'wish_pool') {
+                const pool = new THREE.Group();
+                pool.position.set(-0.2, 0.03, 3.6);
+                const border = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.2, 0.16, 1.5),
+                    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 })
+                );
+                pool.add(border);
+                const water = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.9, 0.18, 1.2),
+                    new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, emissive: 0x0284c7, emissiveIntensity: 0.3 })
+                );
+                pool.add(water);
+                this.scene.add(pool);
+                this.builtMeshes[w.id] = pool;
+            } else if (w.id === 'wish_telescope') {
+                const tele = new THREE.Group();
+                tele.position.set(1.8, 0, 0.8);
+                const tripod = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.06, 0.3, 1.1, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x334155 })
+                );
+                tripod.position.y = 0.55;
+                tele.add(tripod);
+                const tube = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.11, 0.08, 0.95, 12),
+                    new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.5 })
+                );
+                tube.position.set(0, 1.15, 0);
+                tube.rotation.x = -0.65;
+                tele.add(tube);
+                this.scene.add(tele);
+                this.builtMeshes[w.id] = tele;
+            } else if (w.id === 'wish_garden') {
+                const garden = new THREE.Group();
+                garden.position.set(-4.3, 0.04, 0.5);
+                const bed = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.4, 0.1, 1.4),
+                    new THREE.MeshStandardMaterial({ color: 0x3f230e })
+                );
+                garden.add(bed);
+                const colors = [0xfacc15, 0xf472b6, 0x38bdf8, 0xfb923c];
+                for (let i = 0; i < 6; i++) {
+                    const flower = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.11, 8, 8),
+                        new THREE.MeshStandardMaterial({ color: colors[i % colors.length] })
+                    );
+                    flower.position.set((Math.random() - 0.5) * 1.0, 0.22, (Math.random() - 0.5) * 1.0);
+                    garden.add(flower);
+                }
+                this.scene.add(garden);
+                this.builtMeshes[w.id] = garden;
+            }
+        });
+    }
+
     createTree() {
         const group = new THREE.Group();
         const trunk = new THREE.Mesh(
@@ -148,7 +338,6 @@ export class World3D {
         c2.position.y = 4.0;
         c2.castShadow = true;
         group.add(c2);
-
         return group;
     }
 
@@ -161,14 +350,12 @@ export class World3D {
         const tableTop = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.9), woodMat);
         tableTop.position.y = 0.85;
         tableTop.castShadow = true;
-        tableTop.receiveShadow = true;
         deskGroup.add(tableTop);
 
         const legGeo = new THREE.BoxGeometry(0.12, 0.85, 0.12);
         [[-0.68, -0.34], [0.68, -0.34], [-0.68, 0.34], [0.68, 0.34]].forEach(([lx, lz]) => {
             const leg = new THREE.Mesh(legGeo, woodMat);
             leg.position.set(lx, 0.425, lz);
-            leg.castShadow = true;
             deskGroup.add(leg);
         });
 
@@ -177,22 +364,14 @@ export class World3D {
             new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
         );
         pcCase.position.set(0.52, 1.18, 0);
-        pcCase.castShadow = true;
         deskGroup.add(pcCase);
 
-        const stand = new THREE.Mesh(
-            new THREE.BoxGeometry(0.14, 0.2, 0.14),
-            new THREE.MeshStandardMaterial({ color: 0x1e293b })
-        );
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.14), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
         stand.position.set(-0.15, 1.0, -0.1);
         deskGroup.add(stand);
 
-        const frame = new THREE.Mesh(
-            new THREE.BoxGeometry(0.85, 0.55, 0.08),
-            new THREE.MeshStandardMaterial({ color: 0x1e293b })
-        );
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.08), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
         frame.position.set(-0.15, 1.32, -0.1);
-        frame.castShadow = true;
         deskGroup.add(frame);
 
         this.pcScreenMesh = new THREE.Mesh(
@@ -201,17 +380,6 @@ export class World3D {
         );
         this.pcScreenMesh.position.set(-0.15, 1.32, -0.058);
         deskGroup.add(this.pcScreenMesh);
-
-        this.pcGlowLight = new THREE.PointLight(0x38bdf8, 0.6, 3.5);
-        this.pcGlowLight.position.set(-0.15, 1.35, 0.2);
-        deskGroup.add(this.pcGlowLight);
-
-        const keyboard = new THREE.Mesh(
-            new THREE.BoxGeometry(0.55, 0.04, 0.2),
-            new THREE.MeshStandardMaterial({ color: 0x475569 })
-        );
-        keyboard.position.set(-0.15, 0.93, 0.2);
-        deskGroup.add(keyboard);
 
         this.scene.add(deskGroup);
     }
@@ -222,13 +390,7 @@ export class World3D {
 
         const water = new THREE.Mesh(
             new THREE.CylinderGeometry(1.15, 1.15, 0.06, 24),
-            new THREE.MeshStandardMaterial({
-                color: 0x0ea5e9,
-                roughness: 0.15,
-                metalness: 0.2,
-                emissive: 0x0369a1,
-                emissiveIntensity: 0.25
-            })
+            new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.15, emissive: 0x0369a1, emissiveIntensity: 0.25 })
         );
         water.position.y = 0.02;
         pondGroup.add(water);
@@ -241,7 +403,6 @@ export class World3D {
             rock.position.set(Math.cos(angle) * 1.2, 0.08, Math.sin(angle) * 1.2);
             pondGroup.add(rock);
         }
-
         this.scene.add(pondGroup);
     }
 
@@ -280,21 +441,14 @@ export class World3D {
             fireGroup.add(flame);
             this.fireParticles.push(flame);
         }
-
         this.scene.add(fireGroup);
     }
 
     buildCelestialBodies() {
-        this.sunMesh = new THREE.Mesh(
-            new THREE.SphereGeometry(1.1, 16, 16),
-            new THREE.MeshBasicMaterial({ color: 0xfef08a })
-        );
+        this.sunMesh = new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
         this.scene.add(this.sunMesh);
 
-        this.moonMesh = new THREE.Mesh(
-            new THREE.SphereGeometry(0.85, 16, 16),
-            new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })
-        );
+        this.moonMesh = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 16), new THREE.MeshBasicMaterial({ color: 0xe2e8f0 }));
         this.scene.add(this.moonMesh);
 
         const starGeo = new THREE.BufferGeometry();
@@ -333,9 +487,7 @@ export class World3D {
     }
 
     getCurrentHourFloat() {
-        if (this.timeMode === 'fast') {
-            return this.fastTimeHours;
-        }
+        if (this.timeMode === 'fast') return this.fastTimeHours;
         const now = new Date();
         return now.getHours() + now.getMinutes() / 60;
     }
@@ -350,7 +502,6 @@ export class World3D {
         const hh = String(Math.floor(h)).padStart(2, '0');
         const mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
         const timeStr = `${hh}:${mm}`;
-
         if (h >= 6 && h < 12) return `🌅 Manhã (${timeStr})`;
         if (h >= 12 && h < 17) return `☀️ Tarde (${timeStr})`;
         if (h >= 17 && h < 19.5) return `🌇 Entardecer (${timeStr})`;
@@ -366,10 +517,8 @@ export class World3D {
         const sunAngle = ((hour - 6) / 24) * Math.PI * 2;
         const radius = 26;
 
-        const sunX = Math.cos(sunAngle) * radius;
-        const sunY = Math.sin(sunAngle) * radius;
-        this.sunMesh.position.set(sunX, sunY, -12);
-        this.moonMesh.position.set(-sunX, -sunY, -12);
+        this.sunMesh.position.set(Math.cos(sunAngle) * radius, Math.sin(sunAngle) * radius, -12);
+        this.moonMesh.position.set(-Math.cos(sunAngle) * radius, -Math.sin(sunAngle) * radius, -12);
 
         const dayFactor = Math.sin(sunAngle);
         const clampedDay = Math.max(0, Math.min(1, (dayFactor + 0.25) / 1.25));
@@ -401,22 +550,21 @@ export class World3D {
         }
 
         this.ambientLight.intensity = 0.32 + clampedDay * 0.48;
-
         const nightAlpha = Math.max(0, Math.min(1, (-dayFactor - 0.05) * 2.5));
         this.starMat.opacity = nightAlpha * 0.9;
         this.fireflyMat.opacity = nightAlpha * (0.6 + Math.sin(elapsed * 4) * 0.4);
-
         this.fireLight.intensity = (1.1 + (1 - clampedDay) * 1.8) + Math.sin(elapsed * 12) * 0.2;
+        if (this.cabinWindowMat) {
+            this.cabinWindowMat.emissiveIntensity = 0.2 + nightAlpha * 1.1;
+        }
     }
 
     setupCameraControls() {
         const dom = this.renderer.domElement;
-
         dom.addEventListener('pointerdown', (e) => {
             this.isDragging = true;
             this.prevPointer = { x: e.clientX, y: e.clientY };
         });
-
         window.addEventListener('pointermove', (e) => {
             if (!this.isDragging) return;
             const dx = e.clientX - this.prevPointer.x;
@@ -425,11 +573,7 @@ export class World3D {
             this.camHeight = Math.max(1.5, Math.min(9.5, this.camHeight + dy * 0.03));
             this.prevPointer = { x: e.clientX, y: e.clientY };
         });
-
-        window.addEventListener('pointerup', () => {
-            this.isDragging = false;
-        });
-
+        window.addEventListener('pointerup', () => { this.isDragging = false; });
         dom.addEventListener('wheel', (e) => {
             this.camDistance = Math.max(4.5, Math.min(15, this.camDistance + e.deltaY * 0.005));
         }, { passive: true });
