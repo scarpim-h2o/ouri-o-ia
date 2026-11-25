@@ -194,8 +194,23 @@ ${autonomousFormat}`;
             const clean = rawSvg.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
             const start = clean.indexOf('<svg');
             const end = clean.lastIndexOf('</svg>') + 6;
-            return clean.slice(start, end);
+            let extracted = clean.slice(start, end);
+
+            // Garante fundo visível caso a IA tenha desenhado com cores escuras ou sem fundo
+            if (!extracted.includes('<rect')) {
+                extracted = extracted.replace(
+                    /(<svg[^>]*>)/i,
+                    '$1<rect width="100%" height="100%" fill="#1e293b"/>'
+                );
+            }
+            return extracted;
         }
+        // Desenho procedural colorido e bem visível caso a IA não envie SVG válido
+        const colors = ['#38bdf8', '#f472b6', '#facc15', '#4ade80', '#c084fc', '#fb923c'];
+        const c1 = colors[Math.floor(Math.random() * colors.length)];
+        const c2 = colors[Math.floor(Math.random() * colors.length)];
+        return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#1e293b"/><circle cx="245" cy="40" r="18" fill="#fef08a"/><polygon points="40,155 75,85 110,155" fill="#22c55e"/><circle cx="155" cy="110" r="36" fill="${c1}" stroke="#ffffff" stroke-width="3"/><circle cx="125" cy="125" r="22" fill="${c2}" stroke="#ffffff" stroke-width="2"/><text x="150" y="185" fill="#f8fafc" font-size="13" font-weight="bold" text-anchor="middle" font-family="sans-serif">${fallbackTitle}</text></svg>`;
+    }
         // Desenho procedural colorido caso a IA não envie SVG válido
         const colors = ['#38bdf8', '#f472b6', '#facc15', '#4ade80', '#c084fc'];
         const c1 = colors[Math.floor(Math.random() * colors.length)];
