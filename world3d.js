@@ -1,17 +1,16 @@
 /**
  * ============================================================================
  * MÓDULO DO MUNDO 3D E CICLO DIA/NOITE (world3d.js)
- * Gerencia a floresta, o PC na mesa, fogueira, sol, lua, estrelas e vaga-lumes.
+ * Gerencia a floresta, o PC na mesa, lagoa, fogueira, sol, lua e vaga-lumes.
  * ============================================================================
  */
 
 export class World3D {
     constructor(container) {
         this.container = container;
-        this.timeMode = 'real'; // 'real' (relógio do celular) ou 'fast' (ciclo rápido de 2 min)
-        this.fastTimeHours = 10.0; // Começa às 10h da manhã se ativar o modo rápido
+        this.timeMode = 'real'; // 'real' ou 'fast'
+        this.fastTimeHours = 10.0;
 
-        // Pontos de interesse na clareira
         this.POIS = {
             center: new THREE.Vector3(0, 0, 0.5),
             bush: new THREE.Vector3(-3.4, 0, -1.8),
@@ -21,7 +20,6 @@ export class World3D {
             bedLog: new THREE.Vector3(-2.6, 0, 2.4)
         };
 
-        // Controles de câmera
         this.camAngle = 0.4;
         this.camHeight = 4.2;
         this.camDistance = 8.5;
@@ -69,7 +67,6 @@ export class World3D {
     }
 
     buildForest() {
-        // Gramado da clareira
         const ground = new THREE.Mesh(
             new THREE.CylinderGeometry(15, 15, 0.6, 32),
             new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.9 })
@@ -78,7 +75,6 @@ export class World3D {
         ground.receiveShadow = true;
         this.scene.add(ground);
 
-        // Chão de terra no meio
         const dirt = new THREE.Mesh(
             new THREE.CylinderGeometry(4.8, 5.2, 0.05, 24),
             new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 1 })
@@ -87,7 +83,6 @@ export class World3D {
         dirt.receiveShadow = true;
         this.scene.add(dirt);
 
-        // Árvores em volta
         const treeCoords = [
             [-6, -5], [-8, 1], [-5, 6], [0, -8], [6, -6], [8, 0], [5, 6], [-2, 8], [7, 4], [-7, -2]
         ];
@@ -99,7 +94,6 @@ export class World3D {
             this.scene.add(tree);
         });
 
-        // Arbusto de frutinhas
         const bushGroup = new THREE.Group();
         bushGroup.position.copy(this.POIS.bush);
         const bushMesh = new THREE.Mesh(
@@ -119,16 +113,10 @@ export class World3D {
         });
         this.scene.add(bushGroup);
 
-        // Mesa de madeira com o PCzinho
         this.buildPCDesk();
-
-        // Laguinho de água cristalina para beber
         this.buildPond();
-
-        // Fogueira
         this.buildCampfire();
 
-        // Tronco para descanso
         const benchLog = new THREE.Mesh(
             new THREE.CylinderGeometry(0.28, 0.28, 1.6, 8),
             new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 })
@@ -184,7 +172,6 @@ export class World3D {
             deskGroup.add(leg);
         });
 
-        // Gabinete
         const pcCase = new THREE.Mesh(
             new THREE.BoxGeometry(0.32, 0.55, 0.55),
             new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
@@ -193,7 +180,6 @@ export class World3D {
         pcCase.castShadow = true;
         deskGroup.add(pcCase);
 
-        // Monitor
         const stand = new THREE.Mesh(
             new THREE.BoxGeometry(0.14, 0.2, 0.14),
             new THREE.MeshStandardMaterial({ color: 0x1e293b })
@@ -209,7 +195,6 @@ export class World3D {
         frame.castShadow = true;
         deskGroup.add(frame);
 
-        // Tela do monitor
         this.pcScreenMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(0.76, 0.46),
             new THREE.MeshBasicMaterial({ color: 0x0ea5e9 })
@@ -217,12 +202,10 @@ export class World3D {
         this.pcScreenMesh.position.set(-0.15, 1.32, -0.058);
         deskGroup.add(this.pcScreenMesh);
 
-        // Luz suave emitida pela tela do PC à noite
         this.pcGlowLight = new THREE.PointLight(0x38bdf8, 0.6, 3.5);
         this.pcGlowLight.position.set(-0.15, 1.35, 0.2);
         deskGroup.add(this.pcGlowLight);
 
-        // Teclado
         const keyboard = new THREE.Mesh(
             new THREE.BoxGeometry(0.55, 0.04, 0.2),
             new THREE.MeshStandardMaterial({ color: 0x475569 })
@@ -301,23 +284,19 @@ export class World3D {
         this.scene.add(fireGroup);
     }
 
-    // Constrói Sol, Lua, Estrelas e Vaga-lumes para o ciclo Dia/Noite
     buildCelestialBodies() {
-        // Esfera do Sol
         this.sunMesh = new THREE.Mesh(
             new THREE.SphereGeometry(1.1, 16, 16),
             new THREE.MeshBasicMaterial({ color: 0xfef08a })
         );
         this.scene.add(this.sunMesh);
 
-        // Esfera da Lua
         this.moonMesh = new THREE.Mesh(
             new THREE.SphereGeometry(0.85, 16, 16),
             new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })
         );
         this.scene.add(this.moonMesh);
 
-        // Estrelas noturnas
         const starGeo = new THREE.BufferGeometry();
         const starCount = 160;
         const positions = new Float32Array(starCount * 3);
@@ -331,7 +310,6 @@ export class World3D {
         this.stars = new THREE.Points(starGeo, this.starMat);
         this.scene.add(this.stars);
 
-        // Vaga-lumes na floresta à noite
         const ffGeo = new THREE.SphereGeometry(0.05, 6, 6);
         const ffMat = new THREE.MeshBasicMaterial({ color: 0xa3e635, transparent: true, opacity: 0 });
         this.fireflyMat = ffMat;
@@ -379,15 +357,12 @@ export class World3D {
         return `🌙 Noite (${timeStr})`;
     }
 
-    // Interpolação suave das cores do céu, luzes e astros ao longo das 24h
     updateDayNightCycle(dt, elapsed) {
         if (this.timeMode === 'fast') {
-            // 24 horas passam em 120 segundos (0.2h por segundo)
             this.fastTimeHours = (this.fastTimeHours + dt * 0.2) % 24;
         }
 
         const hour = this.getCurrentHourFloat();
-        // Ângulo solar: 6h = nasce (0), 12h = topo (PI/2), 18h = põe (PI)
         const sunAngle = ((hour - 6) / 24) * Math.PI * 2;
         const radius = 26;
 
@@ -396,11 +371,9 @@ export class World3D {
         this.sunMesh.position.set(sunX, sunY, -12);
         this.moonMesh.position.set(-sunX, -sunY, -12);
 
-        // Fator de claridade do dia (-1 = meia-noite, +1 = meio-dia)
         const dayFactor = Math.sin(sunAngle);
         const clampedDay = Math.max(0, Math.min(1, (dayFactor + 0.25) / 1.25));
 
-        // Paletas de céu
         const nightSky = new THREE.Color(0x070b14);
         const sunsetSky = new THREE.Color(0x7c2d12);
         const daySky = new THREE.Color(0x38bdf8);
@@ -417,7 +390,6 @@ export class World3D {
         this.scene.background.copy(targetSky);
         this.scene.fog.color.copy(targetSky);
 
-        // Luz direcional (Sol durante o dia, luar suave à noite)
         if (dayFactor > -0.1) {
             this.sunLight.position.copy(this.sunMesh.position);
             this.sunLight.intensity = 0.3 + clampedDay * 1.05;
@@ -430,12 +402,10 @@ export class World3D {
 
         this.ambientLight.intensity = 0.32 + clampedDay * 0.48;
 
-        // Estrelas e vaga-lumes aparecem à noite
         const nightAlpha = Math.max(0, Math.min(1, (-dayFactor - 0.05) * 2.5));
         this.starMat.opacity = nightAlpha * 0.9;
         this.fireflyMat.opacity = nightAlpha * (0.6 + Math.sin(elapsed * 4) * 0.4);
 
-        // Fogueira brilha mais forte de noite
         this.fireLight.intensity = (1.1 + (1 - clampedDay) * 1.8) + Math.sin(elapsed * 12) * 0.2;
     }
 
@@ -468,13 +438,11 @@ export class World3D {
     update(dt, elapsed, focusPos) {
         this.updateDayNightCycle(dt, elapsed);
 
-        // Animação das chamas
         this.fireParticles.forEach((f, idx) => {
             f.scale.y = 0.8 + Math.sin(elapsed * 10 + idx) * 0.35;
             f.position.y = 0.35 + Math.abs(Math.sin(elapsed * 7 + idx)) * 0.15;
         });
 
-        // Movimento dos vaga-lumes
         this.fireflies.forEach((ff) => {
             const d = ff.userData;
             ff.position.x = d.baseX + Math.sin(elapsed * d.speed + d.phase) * 0.8;
@@ -482,7 +450,6 @@ export class World3D {
             ff.position.z = d.baseZ + Math.cos(elapsed * d.speed + d.phase) * 0.8;
         });
 
-        // Câmera orbita ao redor do Ouriço
         const targetCamX = focusPos.x + Math.sin(this.camAngle) * this.camDistance;
         const targetCamZ = focusPos.z + Math.cos(this.camAngle) * this.camDistance;
         this.camera.position.lerp(new THREE.Vector3(targetCamX, this.camHeight, targetCamZ), 0.1);
