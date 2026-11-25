@@ -1,8 +1,8 @@
 /**
  * ============================================================================
  * MÓDULO DO MUNDO 3D (world3d.js)
- * Inclui: Floresta, Cabana de Madeira, Quadro de Mural 3D com os desenhos reais,
- * PC na mesa, Lagoa, Fogueira, Ciclo Dia/Noite e Estruturas Construíveis!
+ * Estética Low-Poly clara com bétulas de tronco branco, pinheiros, arbustos
+ * geométricos, cabana de madeira, quadro de mural 3D, PC, lago e fogueira!
  * ============================================================================
  */
 
@@ -11,7 +11,7 @@ export class World3D {
         this.container = container;
         this.memory = memoryManager;
         this.timeMode = 'real';
-        this.fastTimeHours = 10.0;
+        this.fastTimeHours = 11.5;
 
         this.POIS = {
             center: new THREE.Vector3(0, 0, 0.5),
@@ -46,8 +46,8 @@ export class World3D {
 
     initScene() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x38bdf8);
-        this.scene.fog = new THREE.FogExp2(0x7dd3fc, 0.032);
+        this.scene.background = new THREE.Color(0x93c5fd);
+        this.scene.fog = new THREE.FogExp2(0xbfdbfe, 0.026);
 
         this.camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 120);
 
@@ -58,11 +58,11 @@ export class World3D {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
 
-        this.ambientLight = new THREE.AmbientLight(0x94a3b8, 0.78);
+        this.ambientLight = new THREE.AmbientLight(0xdbeafe, 0.85);
         this.scene.add(this.ambientLight);
 
-        this.sunLight = new THREE.DirectionalLight(0xfffbeb, 1.2);
-        this.sunLight.position.set(10, 15, 8);
+        this.sunLight = new THREE.DirectionalLight(0xfffbeb, 1.25);
+        this.sunLight.position.set(10, 16, 8);
         this.sunLight.castShadow = true;
         this.sunLight.shadow.mapSize.width = 1024;
         this.sunLight.shadow.mapSize.height = 1024;
@@ -76,52 +76,68 @@ export class World3D {
     }
 
     buildForest() {
+        // Grama verde-clara vibrante estilo low-poly
         const ground = new THREE.Mesh(
-            new THREE.CylinderGeometry(16, 16, 0.6, 32),
-            new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.9 })
+            new THREE.CylinderGeometry(17, 17, 0.6, 32),
+            new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.88 })
         );
         ground.position.y = -0.3;
         ground.receiveShadow = true;
         this.scene.add(ground);
 
+        // Clareira arenosa/terra clara no centro
         const dirt = new THREE.Mesh(
             new THREE.CylinderGeometry(5.2, 5.6, 0.05, 24),
-            new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 1 })
+            new THREE.MeshStandardMaterial({ color: 0xb08968, roughness: 0.95 })
         );
         dirt.position.y = 0.01;
         dirt.receiveShadow = true;
         this.scene.add(dirt);
 
+        // Mistura de Pinheiros e Bétulas de tronco branco ao redor
         const treeCoords = [
-            [-6.5, -5.5], [-8.2, 1], [-5.5, 6.2], [0, -8.5], [6.5, -6.2], [8.2, 0], [5.5, 6.2], [-2, 8.2], [7.2, 4.2], [-7.2, -2]
+            [-6.5, -5.5, 'birch'], [-8.2, 1, 'pine'], [-5.5, 6.2, 'birch'],
+            [0, -8.5, 'pine'], [6.5, -6.2, 'birch'], [8.2, 0, 'pine'],
+            [5.5, 6.2, 'birch'], [-2, 8.2, 'pine'], [7.2, 4.2, 'birch'], [-7.2, -2, 'pine']
         ];
-        treeCoords.forEach(([x, z]) => {
-            const tree = this.createTree();
+        treeCoords.forEach(([x, z, type]) => {
+            const tree = type === 'birch' ? this.createBirchTree() : this.createPineTree();
             tree.position.set(x, 0, z);
-            const s = 0.85 + Math.random() * 0.5;
+            const s = 0.88 + Math.random() * 0.45;
             tree.scale.set(s, s, s);
             this.scene.add(tree);
         });
 
-        // Arbusto de frutinhas
+        // Arbusto geométrico com frutinhas vermelhas
         const bushGroup = new THREE.Group();
         bushGroup.position.copy(this.POIS.bush);
         const bushMesh = new THREE.Mesh(
-            new THREE.DodecahedronGeometry(0.95, 1),
-            new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 })
+            new THREE.IcosahedronGeometry(0.95, 0),
+            new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.8, flatShading: true })
         );
-        bushMesh.position.y = 0.7;
+        bushMesh.position.y = 0.72;
         bushMesh.castShadow = true;
         bushGroup.add(bushMesh);
 
         const berryGeo = new THREE.SphereGeometry(0.11, 8, 8);
-        const berryMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, emissiveIntensity: 0.3 });
+        const berryMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, emissiveIntensity: 0.25 });
         [[0.5, 1.1, 0.5], [-0.4, 1.2, 0.6], [0.2, 0.8, 0.85], [-0.6, 0.9, -0.4], [0.6, 1.0, -0.4]].forEach(([bx, by, bz]) => {
             const b = new THREE.Mesh(berryGeo, berryMat);
             b.position.set(bx, by, bz);
             bushGroup.add(b);
         });
         this.scene.add(bushGroup);
+
+        // Florzinhas e pedras decorativas
+        const flowerColors = [0xfef08a, 0xf472b6, 0xffffff];
+        [[-1.8, -3.5], [2.4, -3.2], [-4.5, 1.5], [4.4, 0.4], [1.1, 3.8]].forEach(([fx, fz], i) => {
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.25, 5), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
+            stem.position.set(fx, 0.125, fz);
+            this.scene.add(stem);
+            const petal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshStandardMaterial({ color: flowerColors[i % flowerColors.length] }));
+            petal.position.set(fx, 0.26, fz);
+            this.scene.add(petal);
+        });
 
         this.buildPCDesk();
         this.buildPond();
@@ -138,19 +154,75 @@ export class World3D {
         this.scene.add(benchLog);
     }
 
-    // Cabana de Madeira da Floresta (igual ao vídeo 2!)
+    createPineTree() {
+        const group = new THREE.Group();
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.24, 0.36, 2.2, 6),
+            new THREE.MeshStandardMaterial({ color: 0x7c4a2d, roughness: 0.9, flatShading: true })
+        );
+        trunk.position.y = 1.1;
+        trunk.castShadow = true;
+        group.add(trunk);
+
+        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.85, flatShading: true });
+        const c1 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.4, 6), leavesMat);
+        c1.position.y = 2.8;
+        c1.castShadow = true;
+        group.add(c1);
+
+        const c2 = new THREE.Mesh(new THREE.ConeGeometry(1.12, 2.0, 6), leavesMat);
+        c2.position.y = 4.0;
+        c2.castShadow = true;
+        group.add(c2);
+        return group;
+    }
+
+    createBirchTree() {
+        const group = new THREE.Group();
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.26, 2.6, 6),
+            new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.75, flatShading: true })
+        );
+        trunk.position.y = 1.3;
+        trunk.castShadow = true;
+        group.add(trunk);
+
+        // Marcas escuras típicas de bétula
+        [0.7, 1.4, 2.0].forEach((my, i) => {
+            const mark = new THREE.Mesh(
+                new THREE.BoxGeometry(0.45, 0.1, 0.45),
+                new THREE.MeshStandardMaterial({ color: 0x334155 })
+            );
+            mark.position.set(0, my, 0);
+            mark.rotation.y = i * 0.8;
+            group.add(mark);
+        });
+
+        const crownMat = new THREE.MeshStandardMaterial({ color: 0x65a30d, roughness: 0.8, flatShading: true });
+        const c1 = new THREE.Mesh(new THREE.DodecahedronGeometry(1.25, 0), crownMat);
+        c1.position.y = 3.1;
+        c1.castShadow = true;
+        group.add(c1);
+
+        const c2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.9, 0), crownMat);
+        c2.position.set(0.4, 3.9, 0.2);
+        c2.castShadow = true;
+        group.add(c2);
+        return group;
+    }
+
     buildCabin() {
         const cabin = new THREE.Group();
         cabin.position.copy(this.POIS.cabin);
         cabin.rotation.y = 0.45;
 
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.85 });
-        const roofMat = new THREE.MeshStandardMaterial({ color: 0x3f230e, roughness: 0.9 });
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x7c4a2d, roughness: 0.85 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.9 });
         const doorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
         this.cabinWindowMat = new THREE.MeshStandardMaterial({
             color: 0xfef08a,
             emissive: 0xfacc15,
-            emissiveIntensity: 0.35
+            emissiveIntensity: 0.45
         });
 
         const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.7, 1.9), wallMat);
@@ -180,7 +252,6 @@ export class World3D {
         this.scene.add(cabin);
     }
 
-    // Quadro de Mural 3D na Floresta com os últimos 5 desenhos dele!
     buildMuralBoard() {
         const boardGroup = new THREE.Group();
         boardGroup.position.copy(this.POIS.muralBoard);
@@ -206,7 +277,6 @@ export class World3D {
         cork.position.set(0, 1.35, 0.01);
         boardGroup.add(cork);
 
-        // 5 slots de papel no quadro (3 em cima, 2 embaixo — igual ao vídeo 1!)
         const slotCoords = [
             [-0.62, 1.62], [0, 1.62], [0.62, 1.62],
             [-0.34, 1.08], [0.34, 1.08]
@@ -256,7 +326,6 @@ export class World3D {
         });
     }
 
-    // Sincroniza desejos construídos (Piscina, Telescópio, Jardim) no mundo 3D!
     syncBuiltStructures() {
         if (!this.memory) return;
         this.memory.state.wishes.forEach(w => {
@@ -318,29 +387,6 @@ export class World3D {
         });
     }
 
-    createTree() {
-        const group = new THREE.Group();
-        const trunk = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.28, 0.4, 2.2, 7),
-            new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.9 })
-        );
-        trunk.position.y = 1.1;
-        trunk.castShadow = true;
-        group.add(trunk);
-
-        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.85 });
-        const c1 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.4, 7), leavesMat);
-        c1.position.y = 2.8;
-        c1.castShadow = true;
-        group.add(c1);
-
-        const c2 = new THREE.Mesh(new THREE.ConeGeometry(1.15, 2.0, 7), leavesMat);
-        c2.position.y = 4.0;
-        c2.castShadow = true;
-        group.add(c2);
-        return group;
-    }
-
     buildPCDesk() {
         const deskGroup = new THREE.Group();
         deskGroup.position.copy(this.POIS.pcDesk);
@@ -361,22 +407,22 @@ export class World3D {
 
         const pcCase = new THREE.Mesh(
             new THREE.BoxGeometry(0.32, 0.55, 0.55),
-            new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
+            new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.5 })
         );
         pcCase.position.set(0.52, 1.18, 0);
         deskGroup.add(pcCase);
 
-        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.14), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.14), new THREE.MeshStandardMaterial({ color: 0x94a3b8 }));
         stand.position.set(-0.15, 1.0, -0.1);
         deskGroup.add(stand);
 
-        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.08), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.08), new THREE.MeshStandardMaterial({ color: 0xcbd5e1 }));
         frame.position.set(-0.15, 1.32, -0.1);
         deskGroup.add(frame);
 
         this.pcScreenMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(0.76, 0.46),
-            new THREE.MeshBasicMaterial({ color: 0x0ea5e9 })
+            new THREE.MeshBasicMaterial({ color: 0x7dd3fc })
         );
         this.pcScreenMesh.position.set(-0.15, 1.32, -0.058);
         deskGroup.add(this.pcScreenMesh);
@@ -390,7 +436,7 @@ export class World3D {
 
         const water = new THREE.Mesh(
             new THREE.CylinderGeometry(1.15, 1.15, 0.06, 24),
-            new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.15, emissive: 0x0369a1, emissiveIntensity: 0.25 })
+            new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.15, emissive: 0x0284c7, emissiveIntensity: 0.25 })
         );
         water.position.y = 0.02;
         pondGroup.add(water);
@@ -524,8 +570,8 @@ export class World3D {
         const clampedDay = Math.max(0, Math.min(1, (dayFactor + 0.25) / 1.25));
 
         const nightSky = new THREE.Color(0x070b14);
-        const sunsetSky = new THREE.Color(0x7c2d12);
-        const daySky = new THREE.Color(0x38bdf8);
+        const sunsetSky = new THREE.Color(0x9a3412);
+        const daySky = new THREE.Color(0x93c5fd);
 
         let targetSky = new THREE.Color();
         if (dayFactor > 0.15) {
@@ -541,21 +587,21 @@ export class World3D {
 
         if (dayFactor > -0.1) {
             this.sunLight.position.copy(this.sunMesh.position);
-            this.sunLight.intensity = 0.3 + clampedDay * 1.05;
+            this.sunLight.intensity = 0.35 + clampedDay * 1.05;
             this.sunLight.color.setHex(dayFactor < 0.25 ? 0xfb923c : 0xfffbeb);
         } else {
             this.sunLight.position.copy(this.moonMesh.position);
-            this.sunLight.intensity = 0.28;
+            this.sunLight.intensity = 0.3;
             this.sunLight.color.setHex(0x818cf8);
         }
 
-        this.ambientLight.intensity = 0.32 + clampedDay * 0.48;
+        this.ambientLight.intensity = 0.36 + clampedDay * 0.52;
         const nightAlpha = Math.max(0, Math.min(1, (-dayFactor - 0.05) * 2.5));
         this.starMat.opacity = nightAlpha * 0.9;
         this.fireflyMat.opacity = nightAlpha * (0.6 + Math.sin(elapsed * 4) * 0.4);
         this.fireLight.intensity = (1.1 + (1 - clampedDay) * 1.8) + Math.sin(elapsed * 12) * 0.2;
         if (this.cabinWindowMat) {
-            this.cabinWindowMat.emissiveIntensity = 0.2 + nightAlpha * 1.1;
+            this.cabinWindowMat.emissiveIntensity = 0.25 + nightAlpha * 1.1;
         }
     }
 
