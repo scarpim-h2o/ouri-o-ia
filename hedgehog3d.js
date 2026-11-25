@@ -1,7 +1,6 @@
 /**
  * ============================================================================
  * MÓDULO DE MODELAGEM 3D E ANIMAÇÃO DO OURIÇO (hedgehog3d.js)
- * Constrói o personagem humanoide articulado e gerencia suas ações na clareira.
  * ============================================================================
  */
 
@@ -14,7 +13,7 @@ export class Hedgehog3D {
         this.targetPos = new THREE.Vector3(0, 0, 0);
         this.rotationY = 0;
 
-        this.currentAction = 'idle'; // 'idle', 'walking', 'eating', 'drinking', 'exercising', 'pc', 'sleeping'
+        this.currentAction = 'idle';
         this.actionTimer = 10;
         this.walkCycle = 0;
         this.exerciseAngle = 0;
@@ -32,25 +31,21 @@ export class Hedgehog3D {
         const shoeStripe = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
         const gloveWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.6 });
 
-        // Tronco humanoide
         const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.68, 14), blueFur);
         torso.position.y = 0.85;
         torso.castShadow = true;
         this.group.add(torso);
 
-        // Barriga clara
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.23, 12, 12), skinTone);
         belly.position.set(0, 0.84, 0.14);
         belly.scale.set(0.9, 1.2, 0.6);
         this.group.add(belly);
 
-        // Pequena cauda atrás
         const tail = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.24, 6), darkBlueQuill);
         tail.position.set(0, 0.65, -0.32);
         tail.rotation.x = -1.2;
         this.group.add(tail);
 
-        // Cabeça articulada
         this.headGroup = new THREE.Group();
         this.headGroup.position.set(0, 1.48, 0);
 
@@ -58,21 +53,15 @@ export class Hedgehog3D {
         headSphere.castShadow = true;
         this.headGroup.add(headSphere);
 
-        // Focinho
         const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.21, 12, 12), skinTone);
         muzzle.position.set(0, -0.06, 0.26);
         muzzle.scale.set(1.12, 0.8, 0.9);
         this.headGroup.add(muzzle);
 
-        // Nariz
-        const nose = new THREE.Mesh(
-            new THREE.SphereGeometry(0.055, 8, 8),
-            new THREE.MeshStandardMaterial({ color: 0x0f172a })
-        );
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
         nose.position.set(0, -0.01, 0.44);
         this.headGroup.add(nose);
 
-        // Olhos expressivos
         const eyeWhiteGeo = new THREE.SphereGeometry(0.085, 10, 10);
         const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const pupilGeo = new THREE.SphereGeometry(0.045, 8, 8);
@@ -89,7 +78,6 @@ export class Hedgehog3D {
             this.headGroup.add(ep);
         });
 
-        // Pálpebras para dormir
         this.eyelids = new THREE.Group();
         [-0.11, 0.11].forEach(ex => {
             const lid = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), blueFur);
@@ -100,7 +88,6 @@ export class Hedgehog3D {
         this.eyelids.visible = false;
         this.headGroup.add(this.eyelids);
 
-        // Orelhas pontudas
         const earGeo = new THREE.ConeGeometry(0.11, 0.23, 6);
         [-0.22, 0.22].forEach((earX, idx) => {
             const ear = new THREE.Mesh(earGeo, blueFur);
@@ -109,15 +96,13 @@ export class Hedgehog3D {
             this.headGroup.add(ear);
         });
 
-        // Espinhos estilizados na cabeça e costas
         const quillGeo = new THREE.ConeGeometry(0.14, 0.68, 7);
-        const quills = [
+        [
             [0, 0.16, -0.35, -1.1, 0],
             [-0.19, 0.06, -0.32, -1.2, 0.32],
             [0.19, 0.06, -0.32, -1.2, -0.32],
             [0, -0.14, -0.34, -1.4, 0]
-        ];
-        quills.forEach(([qx, qy, qz, rx, rz]) => {
+        ].forEach(([qx, qy, qz, rx, rz]) => {
             const q = new THREE.Mesh(quillGeo, darkBlueQuill);
             q.position.set(qx, qy, qz);
             q.rotation.set(rx, 0, rz);
@@ -127,13 +112,11 @@ export class Hedgehog3D {
 
         this.group.add(this.headGroup);
 
-        // Braços articulados
         this.leftArm = this.createArm(skinTone, gloveWhite, -0.36, 1.12);
         this.rightArm = this.createArm(skinTone, gloveWhite, 0.36, 1.12);
         this.group.add(this.leftArm);
         this.group.add(this.rightArm);
 
-        // Pernas e tênis articulados
         this.leftLeg = this.createLeg(blueFur, shoeRed, shoeStripe, -0.15, 0.52);
         this.rightLeg = this.createLeg(blueFur, shoeRed, shoeStripe, 0.15, 0.52);
         this.group.add(this.leftLeg);
@@ -169,7 +152,6 @@ export class Hedgehog3D {
         const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.04, 0.1), stripeMat);
         stripe.position.set(0, -0.42, 0.06);
         pivot.add(stripe);
-
         return pivot;
     }
 
@@ -188,12 +170,9 @@ export class Hedgehog3D {
     }
 
     goExercise() {
-        this.exerciseAngle = Math.atan2(
-            this.pos.z - this.POIS.campfire.z,
-            this.pos.x - this.POIS.campfire.x
-        );
+        this.exerciseAngle = Math.atan2(this.pos.z - this.POIS.campfire.z, this.pos.x - this.POIS.campfire.x);
         this.setAction('exercising', this.POIS.campfire.clone().add(new THREE.Vector3(1.65, 0, 0)));
-        this.actionTimer = 16;
+        this.actionTimer = 15;
     }
 
     goToPC() {
@@ -201,38 +180,35 @@ export class Hedgehog3D {
     }
 
     goSleep() {
-        this.setAction('sleeping', this.POIS.bedLog.clone());
+        this.setAction('sleeping', this.POIS.cabin.clone().add(new THREE.Vector3(0.4, 0, 1.3)));
     }
 
     chooseAutonomousBehavior(memoryState, onSpeak = null) {
         if ((memoryState.thirst ?? 85) < 42) {
             this.goDrink();
-            if (onSpeak) onSpeak("Deu uma sede agora... vou beber uma aguinha fresca no lago!");
+            if (onSpeak) onSpeak("Hora de hidratar! Indo beber água no lago.");
         } else if (memoryState.hunger < 42) {
             this.goEat();
-            if (onSpeak) onSpeak("Tô com fome... vou pegar umas frutinhas vermelhas ali!");
+            if (onSpeak) onSpeak("Reabastecendo energia com os frutos do arbusto.");
         } else if (memoryState.energy < 30) {
             this.goSleep();
-            if (onSpeak) onSpeak("Bateu um sono pesado... vou encostar ali.");
+            if (onSpeak) onSpeak("Vou descansar um pouco perto da cabana.");
         } else {
             const roll = Math.random();
             if (roll < 0.25) {
                 this.goExercise();
-                if (onSpeak) onSpeak("Bora gastar energia! Vou dar umas voltas correndo na fogueira!");
-            } else if (roll < 0.55) {
+                if (onSpeak) onSpeak("Fazendo umas voltas correndo ao redor da fogueira!");
+            } else if (roll < 0.6) {
                 this.goToPC();
-            } else if (roll < 0.8) {
-                const rx = (Math.random() - 0.5) * 6;
-                const rz = (Math.random() - 0.5) * 5;
-                this.setAction('walking', new THREE.Vector3(rx, 0, rz));
             } else {
-                this.setAction('idle', this.POIS.campfire.clone().add(new THREE.Vector3(0, 0, 1.3)));
+                const rx = (Math.random() - 0.5) * 6.5;
+                const rz = (Math.random() - 0.5) * 5.2;
+                this.setAction('walking', new THREE.Vector3(rx, 0, rz));
             }
         }
     }
 
     update(dt, elapsed, memoryState, pcScreenMesh, onSpeak) {
-        // Modo corrida ao redor da fogueira (exercício físico)
         if (this.currentAction === 'exercising') {
             this.exerciseAngle += dt * 2.5;
             const radius = 1.65;
@@ -337,10 +313,8 @@ export class Hedgehog3D {
     getHeadScreenPosition(camera) {
         const headPos = new THREE.Vector3(this.pos.x, 2.15, this.pos.z);
         headPos.project(camera);
-
         const x = (headPos.x * 0.5 + 0.5) * window.innerWidth;
         const y = (-(headPos.y * 0.5) + 0.5) * window.innerHeight;
-
         return {
             x: Math.max(130, Math.min(window.innerWidth - 130, x)),
             y: Math.max(115, y - 20)
