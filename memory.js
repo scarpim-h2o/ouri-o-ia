@@ -41,6 +41,7 @@ export class MemoryManager {
             birthTimestamp: Date.now() - ONE_DAY_MS,
             lastSeenTimestamp: Date.now(),
             hunger: 82,
+            thirst: 85,
             energy: 88,
             lucidity: 2, // Começa super inocente e curioso
             memories: [
@@ -171,15 +172,18 @@ export class MemoryManager {
 
         if (elapsedHours > 0.05) {
             this.state.hunger = Math.max(12, this.state.hunger - elapsedHours * 4);
+            this.state.thirst = Math.max(12, (this.state.thirst ?? 85) - elapsedHours * 5);
             this.state.energy = Math.min(100, this.state.energy + elapsedHours * 5);
             this.state.lucidity = Math.min(100, this.state.lucidity + elapsedHours * 0.25);
             this.save();
         }
     }
 
-    tickMetabolism(isNight) {
-        this.state.hunger = Math.max(5, this.state.hunger - 0.14);
-        const energyDrain = isNight ? 0.18 : 0.09;
+    tickMetabolism(isNight, currentAction = 'idle') {
+        const isExercising = currentAction === 'exercising';
+        this.state.hunger = Math.max(5, this.state.hunger - (isExercising ? 0.35 : 0.16));
+        this.state.thirst = Math.max(5, (this.state.thirst ?? 85) - (isExercising ? 0.5 : 0.22));
+        const energyDrain = isExercising ? 0.45 : (isNight ? 0.18 : 0.1);
         this.state.energy = Math.max(5, this.state.energy - energyDrain);
         // Sobe bem devagar sozinho; sobe mais quando ele pesquisa e escreve no diário!
         this.state.lucidity = Math.min(100, this.state.lucidity + 0.012);
@@ -225,7 +229,7 @@ export class MemoryManager {
             svg: isDataUrl ? '' : svgOrDataUrl,
             imgUrl: isDataUrl ? svgOrDataUrl : ''
         });
-        if (this.state.artGallery.length > 25) {
+        if (this.state.artGallery.length > 60) {
             this.state.artGallery.shift();
         }
         this.save();
