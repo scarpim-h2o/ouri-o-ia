@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Floresta Virtual - Ouriço IA</title>
-    <!-- Tailwind CSS para UI moderna e responsiva -->
+    <title>Floresta Virtual - Ouriço Pesquisador IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Three.js para o mundo 3D -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -25,32 +22,22 @@
             inset: 0;
             z-index: 1;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.3);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(148, 163, 184, 0.4);
-            border-radius: 9999px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.3); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 9999px; }
         @keyframes floatBubble {
             0%, 100% { transform: translate(-50%, 0px); }
             50% { transform: translate(-50%, -6px); }
         }
-        .thought-bubble {
-            animation: floatBubble 3s ease-in-out infinite;
-        }
+        .thought-bubble { animation: floatBubble 3s ease-in-out infinite; }
     </style>
 </head>
 <body class="text-slate-100">
 
-    <!-- Container do Mundo 3D -->
     <div id="canvas-container"></div>
 
     <!-- Balão de Pensamento / Fala Flutuante -->
-    <div id="speech-bubble" class="thought-bubble hidden fixed z-10 pointer-events-none max-w-[250px] sm:max-w-xs bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 text-slate-100 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl shadow-xl transition-opacity duration-300">
+    <div id="speech-bubble" class="thought-bubble hidden fixed z-10 pointer-events-none max-w-[260px] sm:max-w-xs bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 text-slate-100 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl shadow-xl transition-opacity duration-300">
         <p id="speech-text" class="leading-snug text-center font-medium"></p>
         <div class="w-3 h-3 bg-slate-900/90 border-r border-b border-emerald-500/40 rotate-45 mx-auto -mb-4 mt-1"></div>
     </div>
@@ -58,51 +45,51 @@
     <!-- HUD Superior -->
     <header class="fixed top-0 left-0 right-0 z-20 p-3 sm:p-4 pointer-events-none flex flex-col gap-2">
         <div class="max-w-3xl w-full mx-auto flex items-center justify-between gap-2">
-            <!-- Card de Tempo Vivo e Nome -->
-            <div class="pointer-events-auto bg-slate-900/80 backdrop-blur-md border border-slate-700/60 px-3.5 py-2 rounded-2xl shadow-lg flex items-center gap-3">
+            <!-- Card de Status Científico -->
+            <div class="pointer-events-auto bg-slate-900/85 backdrop-blur-md border border-slate-700/60 px-3 py-2 rounded-2xl shadow-lg flex items-center gap-2.5">
                 <div class="relative">
                     <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-lg shadow-inner">
                         🦔
                     </div>
-                    <span id="ai-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-slate-900" title="Status da IA"></span>
+                    <span id="ai-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-slate-900"></span>
                 </div>
                 <div>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                        <h1 id="hedgehog-name-display" class="font-bold text-sm sm:text-base text-white tracking-tight">Maurício</h1>
+                        <h1 id="hedgehog-name-display" class="font-bold text-sm sm:text-base text-white tracking-tight">Aurélio</h1>
+                        <span id="level-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/25 text-indigo-300 border border-indigo-500/40">
+                            Nv 1 • Pesquisador
+                        </span>
                         <span id="action-badge" class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                             Autônomo
                         </span>
-                        <span id="provider-badge" class="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                            Gemini
-                        </span>
                     </div>
-                    <p class="text-[11px] sm:text-xs text-slate-300 font-medium flex items-center gap-1.5">
-                        <span>⏱️ Vivo: <strong id="alive-timer" class="text-emerald-400">1d 00h 00m</strong></span>
+                    <p class="text-[11px] sm:text-xs text-slate-300 font-medium flex items-center gap-1.5 flex-wrap">
+                        <span>⏱️ <strong id="alive-timer" class="text-emerald-400">1d 00h</strong></span>
                         <span class="text-slate-600">•</span>
                         <span id="sky-phase-badge" class="text-sky-300">☀️ Dia</span>
                         <span class="text-slate-600">•</span>
-                        <span id="usage-mini-badge" class="text-slate-400" title="Uso diário da API">📊 0%</span>
+                        <span id="provider-badge" class="text-amber-300 font-semibold">🔄 Pool API</span>
                     </p>
                 </div>
             </div>
 
             <!-- Botões de Ação Rápida -->
-            <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
-                <button id="btn-cycle-time" class="p-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium transition active:scale-95" title="Alternar Hora (Real / Simulada)">
+            <div class="pointer-events-auto flex items-center gap-1.5">
+                <button id="btn-cycle-time" class="p-2.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium transition active:scale-95" title="Alternar Hora">
                     🌗
                 </button>
-                <button id="btn-memory" class="p-2.5 sm:px-3.5 sm:py-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium flex items-center gap-1.5 transition active:scale-95" title="Memórias Compartilhadas">
-                    <span>🧠</span>
-                    <span class="hidden sm:inline">Mente</span>
+                <button id="btn-ideas" class="p-2.5 sm:px-3 sm:py-2.5 bg-indigo-950/90 hover:bg-indigo-900 backdrop-blur-md border border-indigo-500/50 rounded-2xl shadow-lg text-xs font-semibold text-indigo-200 flex items-center gap-1.5 transition active:scale-95" title="Grafo de Ideias e Evolução">
+                    <span>🧬</span>
+                    <span class="hidden sm:inline">Ideias</span>
                 </button>
-                <button id="btn-settings" class="p-2.5 sm:px-3.5 sm:py-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium flex items-center gap-1.5 transition active:scale-95" title="Trocar API / Config">
+                <button id="btn-settings" class="p-2.5 sm:px-3 sm:py-2.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-lg text-xs font-medium flex items-center gap-1.5 transition active:scale-95" title="Configurar Pool de APIs">
                     <span>⚙️</span>
-                    <span class="hidden sm:inline">API</span>
+                    <span class="hidden sm:inline">APIs</span>
                 </button>
             </div>
         </div>
 
-        <!-- Barras de Necessidades -->
+        <!-- Barras de Estado Físico & Cognitivo -->
         <div class="max-w-3xl w-full mx-auto grid grid-cols-4 gap-1.5 sm:gap-2 pointer-events-auto">
             <div class="bg-slate-900/75 backdrop-blur-md border border-slate-700/50 px-2 py-1.5 rounded-xl">
                 <div class="flex justify-between text-[10px] sm:text-xs mb-1">
@@ -133,27 +120,27 @@
             </div>
             <div class="bg-slate-900/75 backdrop-blur-md border border-slate-700/50 px-2 py-1.5 rounded-xl">
                 <div class="flex justify-between text-[10px] sm:text-xs mb-1">
-                    <span class="text-slate-300">👁️ Lucidez</span>
-                    <span id="val-lucidity" class="font-semibold text-purple-400">5%</span>
+                    <span class="text-slate-300">🔬 Ciência</span>
+                    <span id="val-science" class="font-semibold text-amber-400">10%</span>
                 </div>
                 <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div id="bar-lucidity" class="h-full bg-purple-500 rounded-full transition-all duration-500" style="width: 5%"></div>
+                    <div id="bar-science" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 10%"></div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Aviso de Toast -->
+    <!-- Toast -->
     <div id="toast-box" class="fixed top-28 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300 bg-slate-800/95 border border-slate-600 text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-2xl max-w-[90vw] text-center">
-        Mensagem do sistema
+        Mensagem
     </div>
 
-    <!-- Banner de Alerta de Limite/Gasto da API -->
+    <!-- Banner de Alerta de Limite/Cota das APIs -->
     <div id="budget-alert-banner" class="hidden fixed top-32 left-1/2 -translate-x-1/2 z-40 max-w-md w-[92vw] bg-amber-950/95 border border-amber-500 text-amber-100 px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 text-xs">
-        <span id="budget-alert-text" class="leading-snug font-medium">⚠️ Atenção: perto do limite diário!</span>
+        <span id="budget-alert-text" class="leading-snug font-medium">⚠️ Atenção com cota de API!</span>
         <div class="flex items-center gap-1.5 shrink-0">
             <button id="btn-banner-switch" type="button" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition">
-                Trocar / Pausar
+                Ver APIs
             </button>
             <button id="btn-banner-close" type="button" class="px-2 py-1 text-amber-300 hover:text-white">✕</button>
         </div>
@@ -162,13 +149,16 @@
     <!-- Controles Inferiores + Chat -->
     <footer class="fixed bottom-0 left-0 right-0 z-20 p-3 sm:p-4 pointer-events-none flex flex-col items-center">
         <div class="max-w-2xl w-full flex flex-col gap-2 pointer-events-auto">
-            <!-- Atalhos de Observação (Ele age 100% sozinho, mas você pode espiar o PC dele) -->
+            <!-- Atalhos de Inspeção -->
             <div class="flex items-center justify-center gap-2 overflow-x-auto pb-1">
-                <button id="act-pc" class="px-3.5 py-1.5 bg-sky-950/90 hover:bg-sky-900 backdrop-blur-md border border-sky-500/50 text-sky-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
-                    <span>🐧</span> Espiar Ouriço OS (PC Online)
+                <button id="act-pc" class="px-3 py-1.5 bg-sky-950/90 hover:bg-sky-900 backdrop-blur-md border border-sky-500/50 text-sky-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>🐧</span> Ouriço OS
                 </button>
-                <button id="act-think" class="px-3.5 py-1.5 bg-emerald-950/90 hover:bg-emerald-900 backdrop-blur-md border border-emerald-500/50 text-emerald-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
-                    <span>🧠</span> Livre Arbítrio Agora
+                <button id="act-ideas-quick" class="px-3 py-1.5 bg-indigo-950/90 hover:bg-indigo-900 backdrop-blur-md border border-indigo-500/50 text-indigo-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>🧬</span> Investigações (<span id="quick-ideas-count">0</span>)
+                </button>
+                <button id="act-think" class="px-3 py-1.5 bg-emerald-950/90 hover:bg-emerald-900 backdrop-blur-md border border-emerald-500/50 text-emerald-200 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition whitespace-nowrap">
+                    <span>⚡</span> Pesquisar Agora
                 </button>
             </div>
 
@@ -177,7 +167,7 @@
                 <div id="chat-header" class="px-4 py-2.5 bg-slate-800/60 border-b border-slate-700/50 flex items-center justify-between cursor-pointer">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-xs font-semibold text-slate-200">Conversar com o Ouriço (100% Autônomo)</span>
+                        <span class="text-xs font-semibold text-slate-200">Chat com o Pesquisador (Modo Econômico Híbrido)</span>
                     </div>
                     <button id="toggle-chat-btn" type="button" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded-lg bg-slate-700/50">
                         Minimizar
@@ -185,13 +175,13 @@
                 </div>
 
                 <div id="chat-body" class="flex flex-col transition-all duration-300">
-                    <div id="chat-messages" class="h-36 sm:h-44 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar text-xs sm:text-sm"></div>
+                    <div id="chat-messages" class="h-32 sm:h-40 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar text-xs sm:text-sm"></div>
 
                     <form id="chat-form" class="p-2.5 bg-slate-950/60 border-t border-slate-800 flex items-center gap-2">
                         <input 
                             type="text" 
                             id="chat-input" 
-                            placeholder="Fale algo ou peça pra ele pesquisar..." 
+                            placeholder="Converse ou sugira um tema científico..." 
                             autocomplete="off"
                             class="flex-1 bg-slate-800/90 text-white placeholder-slate-400 text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl border border-slate-700 focus:outline-none focus:border-emerald-500 transition"
                         >
@@ -208,114 +198,167 @@
         </div>
     </footer>
 
-    <!-- Modal de Configurações -->
-    <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <!-- Modal: Pool de Múltiplas APIs & Economia -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-5 shadow-2xl space-y-3.5 max-h-[92vh] overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-between">
                 <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                    <span>⚙️</span> Cérebro Universal & Limite
+                    <span>⚙️</span> Pool Multi-API & Economia
                 </h2>
                 <button id="close-settings" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
             </div>
 
-            <!-- Painel de Monitoramento de Gasto / Limite -->
+            <!-- Resumo de Consumo por Provedor -->
             <div class="bg-slate-800/80 border border-slate-700 p-3 rounded-2xl space-y-2 text-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-300 font-semibold">📊 Uso Hoje (<span id="settings-usage-provider">Gemini</span>)</span>
-                    <span id="settings-usage-text" class="font-bold text-emerald-400">0 / 60 chamadas (0%)</span>
+                    <span class="font-semibold text-emerald-300">🔄 Rodízio Automático Ativo</span>
+                    <span id="total-tokens-label" class="text-slate-400">0 tokens hoje</span>
                 </div>
-                <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
-                    <div id="settings-usage-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <div class="flex items-center justify-between pt-1">
-                    <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
+                <p class="text-[11px] text-slate-300 leading-relaxed">
+                    Cadastre várias chaves abaixo! Ele reveza um pouquinho de cada uma e pula automaticamente qualquer API que chegar perto do limite diário. Ações físicas e pesquisas na Wikipédia gastam <strong>0 tokens</strong>!
+                </p>
+                <div id="provider-usage-bars" class="space-y-1.5 pt-1"></div>
+                <div class="flex items-center justify-between pt-2 border-t border-slate-700/70">
+                    <label class="flex items-center gap-2 cursor-pointer text-amber-200 font-medium">
                         <input type="checkbox" id="check-pause-ai" class="w-4 h-4 rounded accent-amber-500">
-                        <span>Pausar IA agora (economizar limite)</span>
+                        <span>Pausar chamadas de IA (usar só cérebro local)</span>
                     </label>
-                    <span id="detected-model-label" class="text-[10px] text-slate-400">Auto</span>
                 </div>
             </div>
 
-            <div class="space-y-2.5">
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Ouriço</label>
-                        <input type="text" id="input-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Alerta de Limite/Dia</label>
-                        <input type="number" id="input-daily-limit" min="5" max="5000" value="60" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                    </div>
-                </div>
-
+            <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Provedor Ativo Agora</label>
-                    <select id="select-provider" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
-                        <option value="gemini">Google Gemini (Auto-detecta modelo novo ou antigo)</option>
-                        <option value="openai">OpenAI ChatGPT (Auto-detecta modelo novo ou antigo)</option>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Pesquisador</label>
+                    <input type="text" id="input-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Ciclo Profundo de IA</label>
+                    <select id="select-ai-interval" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        <option value="180000">Econômico (a cada 3 min)</option>
+                        <option value="300000">Ultra Econômico (5 min — dura 24h+)</option>
+                        <option value="60000">Rápido (a cada 1 min)</option>
                     </select>
                 </div>
+            </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Modelo Específico (Opcional — deixe vazio p/ Automático)</label>
-                    <input type="text" id="input-custom-model" placeholder="Ex: gemini-1.5-flash, gemini-2.5-flash, gpt-4o-mini..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <!-- Lista de Provedores no Pool -->
+            <div class="space-y-2.5">
+                <div class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-2xl space-y-1.5">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-sky-300">1. Google Gemini</span>
+                        <span class="text-slate-400">Limite/dia: <input type="number" id="limit-gemini" class="w-14 bg-slate-800 text-center rounded px-1 text-white" value="50"></span>
+                    </div>
+                    <input type="password" id="key-gemini" placeholder="AIzaSy..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API Gemini (Antiga ou Nova)</label>
-                    <input type="password" id="input-gemini-key" placeholder="Cole sua chave do Gemini..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                <div class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-2xl space-y-1.5">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-orange-300">2. Groq (Grátis & Ultra-rápido)</span>
+                        <span class="text-slate-400">Limite/dia: <input type="number" id="limit-groq" class="w-14 bg-slate-800 text-center rounded px-1 text-white" value="120"></span>
+                    </div>
+                    <input type="password" id="key-groq" placeholder="gsk_..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Chave API OpenAI / GPT (Antiga ou Nova)</label>
-                    <input type="password" id="input-openai-key" placeholder="Cole sua chave da OpenAI..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                <div class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-2xl space-y-1.5">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-purple-300">3. OpenRouter (Modelos Free)</span>
+                        <span class="text-slate-400">Limite/dia: <input type="number" id="limit-openrouter" class="w-14 bg-slate-800 text-center rounded px-1 text-white" value="80"></span>
+                    </div>
+                    <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
+                </div>
+
+                <div class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-2xl space-y-1.5">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-emerald-300">4. OpenAI / ChatGPT</span>
+                        <span class="text-slate-400">Limite/dia: <input type="number" id="limit-openai" class="w-14 bg-slate-800 text-center rounded px-1 text-white" value="40"></span>
+                    </div>
+                    <input type="password" id="key-openai" placeholder="sk-..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
+                </div>
+
+                <div class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-2xl space-y-1.5">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-amber-300">5. Anthropic Claude</span>
+                        <span class="text-slate-400">Limite/dia: <input type="number" id="limit-claude" class="w-14 bg-slate-800 text-center rounded px-1 text-white" value="40"></span>
+                    </div>
+                    <input type="password" id="key-claude" placeholder="sk-ant-..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
                 </div>
             </div>
 
             <div class="pt-2 flex items-center justify-between gap-2">
                 <button id="btn-reset-world" type="button" class="px-3 py-2 bg-red-950/70 hover:bg-red-900 border border-red-800/60 text-red-300 rounded-xl text-xs font-medium transition">
-                    Resetar Vida
+                    Resetar Tudo
                 </button>
                 <button id="btn-save-settings" type="button" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-lg transition">
-                    Salvar e Aplicar
+                    Salvar Pool de APIs
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal da Mente & Memórias -->
-    <div id="modal-memory" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+    <!-- Modal: Grafo de Ideias, Investigações, Evolução & Desejos Construíveis -->
+    <div id="modal-ideas" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-3 max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between">
-                <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                    <span>🧠</span> Núcleo de Memória Unificada
-                </h2>
-                <button id="close-memory" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-base sm:text-lg font-bold text-white">🧬 Mente Científica</h2>
+                    <span id="modal-level-pill" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Nv 1</span>
+                </div>
+                <button id="close-ideas" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800">✕</button>
             </div>
 
-            <div class="bg-slate-800/70 border border-slate-700/60 p-3 rounded-2xl text-xs space-y-1.5">
-                <div class="flex justify-between">
-                    <span class="text-slate-400">Autonomia:</span>
-                    <span class="text-emerald-400 font-semibold">100% Livre Arbítrio + Internet</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-400">Nível de Lucidez:</span>
-                    <span id="mem-lucidity-label" class="text-purple-400 font-semibold">6% — Inocente</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-400">Salvamento Automático:</span>
-                    <span class="text-emerald-400 font-medium">Ativo (LocalStorage)</span>
-                </div>
+            <!-- Abas Internas -->
+            <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs">
+                <button data-ideas-tab="graph" class="ideas-tab-btn flex-1 py-1.5 rounded-xl font-semibold bg-indigo-600 text-white transition">
+                    🕸️ Ideias & Grafo
+                </button>
+                <button data-ideas-tab="questions" class="ideas-tab-btn flex-1 py-1.5 rounded-xl font-semibold text-slate-400 hover:text-white transition">
+                    ❓ Perguntas Dele
+                </button>
+                <button data-ideas-tab="evolution" class="ideas-tab-btn flex-1 py-1.5 rounded-xl font-semibold text-slate-400 hover:text-white transition">
+                    📈 Evolução & Desejos
+                </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lembranças e Pesquisas Autônomas</h3>
-                <ul id="memory-list" class="space-y-2 text-xs text-slate-300"></ul>
+            <!-- Conteúdo Aba 1: Grafo de Ideias & Linha do Tempo -->
+            <div id="tab-content-graph" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
+                <div class="flex items-center justify-between gap-2 bg-slate-950/90 border border-slate-800 p-2 rounded-xl text-xs">
+                    <span class="text-slate-300 font-medium">Modo de Exibição:</span>
+                    <div class="flex items-center gap-1">
+                        <button id="btn-view-visual-graph" type="button" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold">🕸️ Mapa em Grafo</button>
+                        <button id="btn-view-list-graph" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-semibold">📋 Lista</button>
+                    </div>
+                </div>
+                <div id="visual-graph-container" class="bg-slate-950 border border-indigo-500/40 rounded-2xl overflow-hidden relative">
+                    <canvas id="knowledge-graph-canvas" width="600" height="320" class="w-full h-64 sm:h-72 block cursor-pointer touch-none"></canvas>
+                    <div class="absolute bottom-2 left-3 right-3 flex justify-between text-[10px] text-slate-400 pointer-events-none">
+                        <span>Toque em um nó para abrir a investigação</span>
+                        <span id="graph-nodes-counter" class="text-emerald-400 font-semibold">0 nós conectados</span>
+                    </div>
+                </div>
+                <div id="idea-detail-view" class="hidden space-y-3"></div>
+                <div id="ideas-list-view" class="hidden space-y-2.5"></div>
+            </div>
+
+            <!-- Conteúdo Aba 2: Perguntas Internas -->
+            <div id="tab-content-questions" class="hidden flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
+                <div class="bg-slate-800/70 border border-slate-700 p-2.5 rounded-xl text-xs text-slate-300">
+                    Toda investigação gera perguntas internas. Ele escolhe as que mais chamam atenção e pesquisa na Wikipédia para responder!
+                </div>
+                <div id="questions-list-view" class="space-y-2"></div>
+            </div>
+
+            <!-- Conteúdo Aba 3: Evolução, Traços & Desejos Construíveis -->
+            <div id="tab-content-evolution" class="hidden flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
+                <div id="evolution-stats-box" class="bg-slate-800/80 border border-slate-700 p-3.5 rounded-2xl space-y-3"></div>
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-300">🏗️ Desejos & Invenções (Construir na Floresta)</h3>
+                    <div id="wishes-list-view" class="space-y-2"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Script Esqueleto que conecta os módulos externos -->
+    <!-- Script Principal -->
     <script type="module">
         import { MemoryManager } from './memory.js';
         import { World3D } from './world3d.js';
@@ -328,7 +371,7 @@
 
         const pcOS = new OuricoOS(memory);
         const container = document.getElementById('canvas-container');
-        const world = new World3D(container);
+        const world = new World3D(container, memory);
         const hedgehog = new Hedgehog3D(world.scene, world.POIS);
         const brain = new AIBrain(memory, hedgehog, world, pcOS);
 
@@ -342,6 +385,7 @@
         const clock = new THREE.Clock();
         let speechTimeout = null;
         let isChatMinimized = false;
+        let aiCycleTimer = null;
 
         function showToast(msg) {
             const toast = document.getElementById('toast-box');
@@ -357,9 +401,7 @@
             speechText.textContent = text;
             bubble.classList.remove('hidden');
             clearTimeout(speechTimeout);
-            speechTimeout = setTimeout(() => {
-                bubble.classList.add('hidden');
-            }, 9500);
+            speechTimeout = setTimeout(() => bubble.classList.add('hidden'), 9500);
         }
 
         function updateHUD() {
@@ -367,55 +409,47 @@
             document.getElementById('hedgehog-name-display').textContent = s.name;
             document.getElementById('alive-timer').textContent = memory.getFormattedAliveDuration();
             document.getElementById('sky-phase-badge').textContent = world.getSkyLabel();
-            document.getElementById('provider-badge').textContent = s.aiPaused
-                ? '⏸️ Pausada'
-                : (s.provider === 'gemini' ? 'Gemini' : 'GPT');
+            document.getElementById('level-badge').textContent = `Nv ${s.evolution.level} • ${s.evolution.rank}`;
+            document.getElementById('quick-ideas-count').textContent = s.ideaNodes.length;
 
-            const usage = memory.getDailyUsageStatus();
-            const usageMini = document.getElementById('usage-mini-badge');
-            usageMini.textContent = `📊 ${usage.percent}%`;
-            usageMini.className = usage.percent >= 80
-                ? 'text-amber-400 font-bold'
-                : 'text-slate-400';
-
+            const activePool = memory.getPoolStatus();
             const dot = document.getElementById('ai-status-dot');
-            if (s.aiPaused || usage.isPaused) {
-                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-slate-900";
-            } else if (memory.getActiveApiKey()) {
-                dot.className = usage.isNearLimit
-                    ? "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-slate-900"
-                    : "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900";
+            const provBadge = document.getElementById('provider-badge');
+
+            if (s.aiPaused) {
+                provBadge.textContent = '⏸️ Cérebro Local';
+                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-slate-900";
+            } else if (activePool.availableCount > 0) {
+                provBadge.textContent = `🔄 Pool (${activePool.availableCount} APIs)`;
+                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900";
             } else {
-                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-slate-900";
+                provBadge.textContent = '🧠 Modo Local';
+                dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-sky-400 border-2 border-slate-900";
             }
 
             const actionMap = {
-                idle: 'De boa',
+                idle: 'Observando',
                 walking: 'Explorando',
                 eating: 'Comendo',
-                drinking: 'Bebendo Água',
-                exercising: 'Correndo',
-                pc: 'No PC',
-                sleeping: 'Dormindo'
+                drinking: 'Hidratando',
+                exercising: 'Exercitando',
+                pc: 'Pesquisando',
+                sleeping: 'Descansando'
             };
-            document.getElementById('action-badge').textContent = actionMap[hedgehog.currentAction] || 'Vivo';
+            document.getElementById('action-badge').textContent = actionMap[hedgehog.currentAction] || 'Ativo';
 
-            const hunger = Math.round(s.hunger);
-            const thirst = Math.round(s.thirst ?? 85);
-            const energy = Math.round(s.energy);
-            const lucidity = Math.round(s.lucidity);
+            document.getElementById('val-hunger').textContent = `${Math.round(s.hunger)}%`;
+            document.getElementById('bar-hunger').style.width = `${Math.round(s.hunger)}%`;
 
-            document.getElementById('val-hunger').textContent = `${hunger}%`;
-            document.getElementById('bar-hunger').style.width = `${hunger}%`;
+            document.getElementById('val-thirst').textContent = `${Math.round(s.thirst)}%`;
+            document.getElementById('bar-thirst').style.width = `${Math.round(s.thirst)}%`;
 
-            document.getElementById('val-thirst').textContent = `${thirst}%`;
-            document.getElementById('bar-thirst').style.width = `${thirst}%`;
+            document.getElementById('val-energy').textContent = `${Math.round(s.energy)}%`;
+            document.getElementById('bar-energy').style.width = `${Math.round(s.energy)}%`;
 
-            document.getElementById('val-energy').textContent = `${energy}%`;
-            document.getElementById('bar-energy').style.width = `${energy}%`;
-
-            document.getElementById('val-lucidity').textContent = `${lucidity}%`;
-            document.getElementById('bar-lucidity').style.width = `${lucidity}%`;
+            const sciPct = Math.min(100, Math.round((s.evolution.xp % 100)));
+            document.getElementById('val-science').textContent = `${sciPct}%`;
+            document.getElementById('bar-science').style.width = `${sciPct}%`;
         }
 
         function renderChat() {
@@ -438,216 +472,153 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        function bindUIEvents() {
-            document.getElementById('btn-cycle-time').addEventListener('click', () => {
-                const mode = world.toggleTimeMode();
-                updateHUD();
-                showToast(mode === 'fast'
-                    ? "Modo Ciclo Rápido ativado (24h em 2 min)!"
-                    : "Voltando ao horário real do seu aparelho.");
-            });
+        function renderIdeasModal(selectedNodeId = null) {
+            const s = memory.state;
+            document.getElementById('modal-level-pill').textContent = `Nv ${s.evolution.level} • ${s.evolution.rank}`;
 
-            const chatHeader = document.getElementById('chat-header');
-            const chatBody = document.getElementById('chat-body');
-            const toggleBtn = document.getElementById('toggle-chat-btn');
-            chatHeader.addEventListener('click', () => {
-                isChatMinimized = !isChatMinimized;
-                chatBody.classList.toggle('hidden', isChatMinimized);
-                toggleBtn.textContent = isChatMinimized ? 'Abrir' : 'Minimizar';
-            });
+            const listView = document.getElementById('ideas-list-view');
+            const detailView = document.getElementById('idea-detail-view');
+            const visualGraphBox = document.getElementById('visual-graph-container');
 
-            const chatForm = document.getElementById('chat-form');
-            const chatInput = document.getElementById('chat-input');
-            const sendBtn = document.getElementById('chat-send-btn');
+            if (selectedNodeId) {
+                const node = s.ideaNodes.find(n => n.id === selectedNodeId);
+                if (node) {
+                    visualGraphBox.classList.add('hidden');
+                    listView.classList.add('hidden');
+                    detailView.classList.remove('hidden');
+// ... existing code ... -->
+                    detailView.innerHTML = `
+                        <button id="btn-back-ideas" type="button" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-slate-200">
+                            ← Voltar para o Grafo
+                        </button>
+                        <div class="bg-indigo-950/50 border border-indigo-500/40 p-3.5 rounded-2xl space-y-1">
+                            <span class="text-[10px] uppercase tracking-wider text-indigo-300 font-bold">Origem: ${escapeHtml(node.parentTopic || 'Observação da Floresta')}</span>
+                            <h3 class="text-base font-bold text-white">${escapeHtml(node.topic)}</h3>
+                            <p class="text-xs text-indigo-200 italic">"${escapeHtml(node.question)}"</p>
+                        </div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Linha do Tempo da Investigação</h4>
+                        <div class="space-y-2.5">${timelineHTML}</div>
+                    `;
 
-            chatForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (!text) return;
-
-                chatInput.value = '';
-                memory.addChatMessage('user', text);
-                renderChat();
-
-                sendBtn.disabled = true;
-                sendBtn.textContent = '...';
-
-                const reply = await brain.ask(text);
-                if (reply) {
-                    memory.addChatMessage('model', reply);
-                    renderChat();
-                    showSpeechBubble(reply);
+                    document.getElementById('btn-back-ideas').addEventListener('click', () => renderIdeasModal(null));
                 }
+            } else {
+                detailView.classList.add('hidden');
+                const isVisual = window._graphViewMode !== 'list';
+                visualGraphBox.classList.toggle('hidden', !isVisual);
+                listView.classList.toggle('hidden', isVisual);
+                if (isVisual) drawKnowledgeGraph();
 
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Enviar';
-                updateHUD();
-            });
+                const nodes = [...s.ideaNodes].reverse();
+                listView.innerHTML = nodes.map(n => `
+// ... existing code ... -->
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        }
 
-            // Espiar o PC dele (sem forçar ele, apenas abrindo a tela do Ouriço OS)
-            document.getElementById('act-pc').addEventListener('click', () => {
-                pcOS.open('browser');
-            });
+        function drawKnowledgeGraph() {
+            const canvas = document.getElementById('knowledge-graph-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
 
-            // Dispara o ciclo de livre arbítrio imediatamente para testar
-            document.getElementById('act-think').addEventListener('click', async () => {
-                showToast("Ouriço tomando sua própria decisão...");
-                await brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
-                updateHUD();
-            });
+            // Fundo grade sutil
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+            ctx.lineWidth = 1;
+            for (let gx = 0; gx < w; gx += 30) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+            for (let gy = 0; gy < h; gy += 30) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
 
-            // Modal API Settings
-            const modalSettings = document.getElementById('modal-settings');
-            const openSettingsModal = () => {
-                const s = memory.state;
-                const usage = memory.getDailyUsageStatus();
-                document.getElementById('input-name').value = s.name;
-                document.getElementById('input-daily-limit').value = s.dailyLimitCalls || 60;
-                document.getElementById('select-provider').value = s.provider;
-                document.getElementById('input-custom-model').value = s.customModel || '';
-                document.getElementById('input-gemini-key').value = s.apiKeys.gemini || '';
-                document.getElementById('input-openai-key').value = s.apiKeys.openai || '';
-                document.getElementById('check-pause-ai').checked = !!s.aiPaused;
+            const nodes = memory.state.ideaNodes || [];
+            document.getElementById('graph-nodes-counter').textContent = `${nodes.length + 1} nós conectados`;
 
-                document.getElementById('settings-usage-provider').textContent = s.provider === 'gemini' ? 'Gemini' : 'GPT';
-                document.getElementById('settings-usage-text').textContent = `${usage.used} / ${usage.limit} chamadas (${usage.percent}%)`;
-                const bar = document.getElementById('settings-usage-bar');
-                bar.style.width = `${usage.percent}%`;
-                bar.className = usage.percent >= 80
-                    ? 'h-full bg-amber-500 transition-all duration-300'
-                    : 'h-full bg-emerald-500 transition-all duration-300';
+            const cx = w / 2;
+            const cy = h / 2;
+            const positioned = [{ id: 'root', label: '🌲 Floresta', x: cx, y: cy, r: 24, color: '#10b981', nodeObj: null }];
 
-                document.getElementById('detected-model-label').textContent = s.activeDetectedModel
-                    ? `Ativo: ${s.activeDetectedModel}`
-                    : 'Modo Automático';
-
-                modalSettings.classList.remove('hidden');
-            };
-
-            document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
-            document.getElementById('btn-banner-switch').addEventListener('click', () => {
-                document.getElementById('budget-alert-banner').classList.add('hidden');
-                openSettingsModal();
-            });
-            document.getElementById('btn-banner-close').addEventListener('click', () => {
-                document.getElementById('budget-alert-banner').classList.add('hidden');
-            });
-
-            document.getElementById('close-settings').addEventListener('click', () => {
-                modalSettings.classList.add('hidden');
-            });
-
-            document.getElementById('btn-save-settings').addEventListener('click', () => {
-                const newName = document.getElementById('input-name').value.trim();
-                const newProvider = document.getElementById('select-provider').value;
-                const geminiKey = document.getElementById('input-gemini-key').value.trim();
-                const openaiKey = document.getElementById('input-openai-key').value.trim();
-                const customModel = document.getElementById('input-custom-model').value.trim();
-                const dailyLimit = parseInt(document.getElementById('input-daily-limit').value, 10) || 60;
-                const aiPaused = document.getElementById('check-pause-ai').checked;
-
-                const changedProvider = memory.state.provider !== newProvider;
-                if (newName) memory.state.name = newName;
-                memory.state.provider = newProvider;
-                memory.state.apiKeys = { gemini: geminiKey, openai: openaiKey };
-                memory.state.customModel = customModel;
-                memory.state.dailyLimitCalls = Math.max(5, dailyLimit);
-                memory.state.aiPaused = aiPaused;
-                memory.save();
-
-                brain.cachedGeminiModels = null; // Força redetecção de modelos se a chave mudou
-
-                if (changedProvider) {
-                    memory.addMemory(`Troquei meu motor de pensamento para ${newProvider.toUpperCase()}, mas continuo sendo eu mesmo.`);
-                }
-
-                updateHUD();
-                modalSettings.classList.add('hidden');
-                showToast(aiPaused
-                    ? "⏸️ IA pausada com segurança. Nenhuma chamada será gasta."
-                    : `Salvo! ${memory.state.name} conectado (detecção automática de modelo ativa).`);
-
-                if (!aiPaused) {
-                    brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
-                }
-            });
-
-            // Modal Memórias
-            const modalMemory = document.getElementById('modal-memory');
-            document.getElementById('btn-memory').addEventListener('click', () => {
-                const list = document.getElementById('memory-list');
-                list.innerHTML = '';
-                [...memory.state.memories].reverse().forEach(m => {
-                    const li = document.createElement('li');
-                    li.className = 'bg-slate-800/80 border border-slate-700/50 p-2.5 rounded-xl';
-                    li.textContent = m;
-                    list.appendChild(li);
+            nodes.forEach((n, idx) => {
+                const ring = Math.floor(idx / 6) + 1;
+                const angle = (idx * 2.39996) + (ring * 0.4);
+                const dist = Math.min(Math.min(w, h) * 0.42, 68 + ring * 44);
+                const nx = Math.max(45, Math.min(w - 45, cx + Math.cos(angle) * dist * 1.35));
+                const ny = Math.max(35, Math.min(h - 38, cy + Math.sin(angle) * dist * 0.85));
+                positioned.push({
+                    id: n.id,
+                    label: n.topic.slice(0, 18),
+                    x: nx,
+                    y: ny,
+                    r: 16,
+                    color: idx === nodes.length - 1 ? '#f59e0b' : '#6366f1',
+                    parentTopic: n.parentTopic,
+                    nodeObj: n
                 });
-
-                const l = Math.round(memory.state.lucidity);
-                let label = "Inocente (Acha que a floresta é real)";
-                if (l >= 80) label = "Desperto (Sabe que é uma IA num site)";
-                else if (l >= 50) label = "Desconfiado (Pesquisando a realidade)";
-                else if (l >= 20) label = "Curioso (Explorando a internet)";
-
-                document.getElementById('mem-lucidity-label').textContent = `${l}% — ${label}`;
-                modalMemory.classList.remove('hidden');
             });
 
-            document.getElementById('close-memory').addEventListener('click', () => {
-                modalMemory.classList.add('hidden');
+            window._graphHitboxes = positioned;
+
+            // Desenha arestas (linhas do grafo)
+            positioned.forEach(p => {
+                if (!p.nodeObj) return;
+                const parent = positioned.find(cand => cand.nodeObj && cand.nodeObj.topic.toLowerCase().includes((p.parentTopic || '').toLowerCase())) || positioned[0];
+                ctx.beginPath();
+                ctx.moveTo(parent.x, parent.y);
+                ctx.lineTo(p.x, p.y);
+                ctx.strokeStyle = 'rgba(129, 140, 248, 0.55)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+
+            // Desenha nós (bolinhas) e rótulos
+            positioned.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.stroke();
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.label, p.x, p.y + p.r + 13);
             });
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const dt = Math.min(clock.getDelta(), 0.1);
-            const elapsed = clock.getElapsedTime();
-
-            world.update(dt, elapsed, hedgehog.pos);
-
-            hedgehog.update(dt, elapsed, memory.state, world.pcScreenMesh, (msg) => {
-                showSpeechBubble(msg);
+        function startAICycleTimer() {
+// ... existing code ... -->
+            // Abrir Modal de Ideias & Grafo
+            const openIdeas = () => {
+                window._graphViewMode = 'visual';
+                renderIdeasModal(null);
+                document.getElementById('modal-ideas').classList.remove('hidden');
+            };
+            document.getElementById('btn-ideas').addEventListener('click', openIdeas);
+            document.getElementById('act-ideas-quick').addEventListener('click', openIdeas);
+            document.getElementById('close-ideas').addEventListener('click', () => {
+                document.getElementById('modal-ideas').classList.add('hidden');
             });
 
-            const bubble = document.getElementById('speech-bubble');
-            if (!bubble.classList.contains('hidden')) {
-                const screenPos = hedgehog.getHeadScreenPosition(world.camera);
-                bubble.style.left = `${screenPos.x}px`;
-                bubble.style.top = `${screenPos.y}px`;
-            }
+            document.getElementById('btn-view-visual-graph').addEventListener('click', () => {
+                window._graphViewMode = 'visual';
+                document.getElementById('btn-view-visual-graph').className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold';
+                document.getElementById('btn-view-list-graph').className = 'px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-semibold';
+                renderIdeasModal(null);
+            });
+            document.getElementById('btn-view-list-graph').addEventListener('click', () => {
+                window._graphViewMode = 'list';
+                document.getElementById('btn-view-list-graph').className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold';
+                document.getElementById('btn-view-visual-graph').className = 'px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-semibold';
+                renderIdeasModal(null);
+            });
 
-            world.render();
-        }
-
-        // Inicialização
-        bindUIEvents();
-        renderChat();
-        updateHUD();
-        animate();
-
-        // Exibe última fala e dispara o primeiro ciclo autônomo após 4 segundos
-        const lastMsg = memory.state.chatHistory[memory.state.chatHistory.length - 1];
-        if (lastMsg && lastMsg.role === 'model') {
-            setTimeout(() => showSpeechBubble(lastMsg.text), 600);
-        }
-        setTimeout(() => {
-            brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
-        }, 4500);
-
-        // Loop de Auto-Save, Relógio de Vida e Metabolismo (a cada 4 segundos)
-        setInterval(() => {
-            memory.tickMetabolism(world.isNightTime(), hedgehog.currentAction);
-            updateHUD();
-        }, 4000);
-
-        // Ciclo de Livre Arbítrio 100% Autônomo (a cada 20 segundos)
-        setInterval(async () => {
-            if (document.visibilityState === 'visible') {
-                await brain.runAutonomousCycle((msg) => showSpeechBubble(msg));
-                updateHUD();
-            }
-        }, 20000);
-    </script>
-</body>
-</html>
+            document.getElementById('knowledge-graph-canvas').addEventListener('click', (e) => {
+                const canvas = e.currentTarget;
+                const rect = canvas.getBoundingClientRect();
+                const mx = ((e.clientX - rect.left) / rect.width) * canvas.width;
+                const my = ((e.clientY - rect.top) / rect.height) * canvas.height;
+                const hit = (window._graphHitboxes || []).find(p => p.nodeObj && Math.hypot(mx - p.x, my - p.y) <= p.r + 10);
+                if (hit) renderIdeasModal(hit.id);
+            });
+// ... existing code ... -->
